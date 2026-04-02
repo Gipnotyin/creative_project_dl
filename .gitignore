@@ -1,0 +1,16 @@
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+.env
+venv/
+.venv/
+artifacts/checkpoints/*.pt
+artifacts/preds/*.csv
+artifacts/reports/*.json
+artifacts/reports/*.csv
+data/raw/*
+IMPLEMENTATION_CHECKLIST.md
+TASK_CHECKLIST.md
+task.txt
+.DS_Store
+.idea

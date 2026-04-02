@@ -1,0 +1,9 @@
+{
+  "full_rows": 1387,
+  "rows_with_images": 1387,
+  "train_rows": 970,
+  "val_rows": 208,
+  "test_rows": 209,
+  "image_match_rate": 1.0,
+  "images_found_on_disk": 1388
+}

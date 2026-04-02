@@ -1,0 +1,45 @@
+seed: 42
+image_size: 224
+batch_size: 16
+num_workers: 0
+epochs: 5
+lr: 0.0003
+backbone_lr: 0.00003
+weight_decay: 0.0001
+freeze_backbone_epochs: 2
+max_grad_norm: 1.0
+min_lr: 0.000001
+lr_schedule: cosine
+backbone: convnext_tiny
+pretrained: true
+train_csv: data/processed/train.csv
+val_csv: data/processed/val.csv
+test_csv: data/processed/test_open.csv
+full_manifest_path: data/processed/full_manifest.csv
+matched_manifest_path: data/processed/matched_manifest.csv
+label_maps_path: data/processed/label_maps.json
+prep_stats_path: data/processed/prep_stats.json
+images_dir: data/raw/images
+checkpoint_dir: artifacts/checkpoints
+preds_dir: artifacts/preds
+reports_dir: artifacts/reports
+figures_dir: artifacts/figures
+fields:
+  - type
+  - part
+  - integrity
+  - material
+loss_weights:
+  type: 0.35
+  part: 0.25
+  integrity: 0.20
+  material: 0.20
+confidence_thresholds:
+  type: 0.45
+  part: 0.50
+  integrity: 0.55
+  material: 0.50
+rare_class_min_count: 5
+split:
+  val_size: 0.15
+  test_size: 0.15
