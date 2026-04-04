@@ -99,6 +99,7 @@ def main() -> None:
         train=False,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     loader = DataLoader(
         dataset,
@@ -117,12 +118,14 @@ def main() -> None:
     model.to(device)
     model.eval()
 
-    class_weights = build_class_weights(
-        train_csv=cfg["train_csv"],
-        fields=fields,
-        label_maps=label_maps,
-        max_weight=5.0,
-    )
+    class_weights = None
+    if bool(cfg.get("use_class_weights", True)):
+        class_weights = build_class_weights(
+            train_csv=cfg["train_csv"],
+            fields=fields,
+            label_maps=label_maps,
+            max_weight=5.0,
+        )
 
     output_dir = Path(args.output_dir) if args.output_dir else Path(cfg["reports_dir"]) / f"{args.split}_detailed"
     ensure_dir(output_dir)
@@ -161,7 +164,7 @@ def main() -> None:
                     outputs[field],
                     targets,
                     mask,
-                    class_weights=class_weights[field].to(device),
+                    class_weights=class_weights[field].to(device) if class_weights is not None else None,
                 )
                 total_loss += cfg["loss_weights"][field] * loss
 

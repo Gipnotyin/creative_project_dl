@@ -264,6 +264,8 @@ def main():
     label_maps_path = cfg.get("label_maps_path", "data/processed/label_maps.json")
     label_maps = load_json(label_maps_path)
     fields = cfg["fields"]
+    preprocess_mode = str(cfg.get("preprocess_mode", "pad"))
+    use_class_weights = bool(cfg.get("use_class_weights", True))
 
     vocabs = {
         f: label_maps[f]["field_to_idx"]
@@ -281,6 +283,7 @@ def main():
         train=True,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=preprocess_mode,
     )
     val_ds = SimilisDataset(
         cfg["val_csv"],
@@ -288,6 +291,7 @@ def main():
         train=False,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=preprocess_mode,
     )
     test_ds = SimilisDataset(
         cfg["test_csv"],
@@ -295,6 +299,7 @@ def main():
         train=False,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=preprocess_mode,
     )
 
     train_loader = DataLoader(
@@ -325,24 +330,28 @@ def main():
         }
     )
 
-    class_weights = build_class_weights(
-        train_csv=cfg["train_csv"],
-        fields=fields,
-        label_maps=label_maps,
-        max_weight=5.0,
-    )
+    class_weights = None
+    if use_class_weights:
+        class_weights = build_class_weights(
+            train_csv=cfg["train_csv"],
+            fields=fields,
+            label_maps=label_maps,
+            max_weight=5.0,
+        )
 
-    print("Class weights:")
-    for field in fields:
-        idx_to_field = {
-            int(k): v for k, v in label_maps[field]["idx_to_field"].items()
-        }
-        weights_np = class_weights[field].numpy()
-        printable = {
-            idx_to_field[i]: round(float(weights_np[i]), 4)
-            for i in range(len(weights_np))
-        }
-        print(field, printable)
+        print("Class weights:")
+        for field in fields:
+            idx_to_field = {
+                int(k): v for k, v in label_maps[field]["idx_to_field"].items()
+            }
+            weights_np = class_weights[field].numpy()
+            printable = {
+                idx_to_field[i]: round(float(weights_np[i]), 4)
+                for i in range(len(weights_np))
+            }
+            print(field, printable)
+    else:
+        print("Class weights: disabled")
 
     model = SimilisMultiTaskModel(
         cfg["backbone"],
@@ -362,6 +371,8 @@ def main():
             "max_grad_norm": max_grad_norm,
             "lr_schedule": str(cfg.get("lr_schedule", "cosine")),
             "min_lr": float(cfg.get("min_lr", 0.0)),
+            "preprocess_mode": preprocess_mode,
+            "use_class_weights": use_class_weights,
         }
     )
 

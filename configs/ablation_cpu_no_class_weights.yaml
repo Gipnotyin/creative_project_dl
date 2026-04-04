@@ -2,18 +2,18 @@ seed: 42
 image_size: 224
 batch_size: 16
 num_workers: 0
-epochs: 5
+epochs: 4
 lr: 0.0003
 backbone_lr: 0.00003
 weight_decay: 0.0001
-freeze_backbone_epochs: 2
+freeze_backbone_epochs: 1
 max_grad_norm: 1.0
 min_lr: 0.000001
 lr_schedule: cosine
 backbone: convnext_tiny
 pretrained: true
 preprocess_mode: pad
-use_class_weights: true
+use_class_weights: false
 train_csv: data/processed/train.csv
 val_csv: data/processed/val.csv
 test_csv: data/processed/test_open.csv
@@ -22,10 +22,10 @@ matched_manifest_path: data/processed/matched_manifest.csv
 label_maps_path: data/processed/label_maps.json
 prep_stats_path: data/processed/prep_stats.json
 images_dir: data/raw/images
-checkpoint_dir: artifacts/checkpoints
-preds_dir: artifacts/preds
-reports_dir: artifacts/reports
-figures_dir: artifacts/figures
+checkpoint_dir: artifacts/ablations/no_class_weights/checkpoints
+preds_dir: artifacts/ablations/no_class_weights/preds
+reports_dir: artifacts/ablations/no_class_weights/reports
+figures_dir: artifacts/ablations/no_class_weights/figures
 fields:
   - type
   - part

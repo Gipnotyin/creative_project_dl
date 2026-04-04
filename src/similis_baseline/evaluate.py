@@ -40,6 +40,7 @@ def main():
         train=False,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     loader = DataLoader(
         dataset,
@@ -57,12 +58,14 @@ def main():
     device = torch_device()
     model.to(device)
 
-    class_weights = build_class_weights(
-        train_csv=cfg["train_csv"],
-        fields=fields,
-        label_maps=label_maps,
-        max_weight=5.0,
-    )
+    class_weights = None
+    if bool(cfg.get("use_class_weights", True)):
+        class_weights = build_class_weights(
+            train_csv=cfg["train_csv"],
+            fields=fields,
+            label_maps=label_maps,
+            max_weight=5.0,
+        )
     metrics = evaluate(model, loader, device, fields, cfg["loss_weights"], class_weights)
     metrics["split"] = args.split
     metrics["rows"] = len(dataset)

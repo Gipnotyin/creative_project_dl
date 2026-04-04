@@ -37,18 +37,21 @@ class PadToSquare:
         return ImageOps.expand(image, border=(left, top, right, bottom), fill=self.fill)
 
 
-def build_transforms(image_size: int, train: bool):
+def build_transforms(image_size: int, train: bool, preprocess_mode: str = "pad"):
+    if preprocess_mode not in {"pad", "stretch"}:
+        raise ValueError(f"Unsupported preprocess_mode: {preprocess_mode}")
+
     resize = transforms.Resize((image_size, image_size), interpolation=InterpolationMode.BILINEAR)
     to_tensor = [
         transforms.ToTensor(),
         transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
     ]
+    geometry = [PadToSquare(), resize] if preprocess_mode == "pad" else [resize]
 
     if train:
         return transforms.Compose(
             [
-                PadToSquare(),
-                resize,
+                *geometry,
                 transforms.RandomHorizontalFlip(p=0.5),
                 transforms.RandomRotation(
                     degrees=5,
@@ -61,8 +64,7 @@ def build_transforms(image_size: int, train: bool):
         )
     return transforms.Compose(
         [
-            PadToSquare(),
-            resize,
+            *geometry,
             *to_tensor,
         ]
     )
@@ -76,10 +78,15 @@ class SimilisDataset(Dataset):
         train: bool,
         fields: List[str],
         label_maps_path: str = "data/processed/label_maps.json",
+        preprocess_mode: str = "pad",
     ):
         self.df = pd.read_csv(csv_path).reset_index(drop=True)
         self.fields = fields
-        self.transform = build_transforms(image_size=image_size, train=train)
+        self.transform = build_transforms(
+            image_size=image_size,
+            train=train,
+            preprocess_mode=preprocess_mode,
+        )
 
         label_maps = load_json(label_maps_path)
         self.field_to_idx: Dict[str, Dict[str, int]] = {

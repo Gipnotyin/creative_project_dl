@@ -52,6 +52,7 @@ def main():
         train=True,
         fields=fields,
         label_maps_path=cfg["label_maps_path"],
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     val_ds = SimilisDataset(
         cfg["val_csv"],
@@ -59,6 +60,7 @@ def main():
         train=False,
         fields=fields,
         label_maps_path=cfg["label_maps_path"],
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     test_ds = SimilisDataset(
         cfg["test_csv"],
@@ -66,6 +68,7 @@ def main():
         train=False,
         fields=fields,
         label_maps_path=cfg["label_maps_path"],
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
 
     train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=False, num_workers=0)

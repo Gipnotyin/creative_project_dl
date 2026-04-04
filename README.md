@@ -1,156 +1,217 @@
 # SIMILIS Baseline Project
 
-Базовый pipeline для трека **SIMILIS baseline**:
+Базовый pipeline для задачи:
 
 `изображение -> предсказание полей -> auto_description`
 
-README ниже закрывает то, что обычно требуется к сдаче: выбранный подход, метрики, структура репозитория, запуск
-обучения и инференса, ограничения и план дальнейшей работы.
+Проект решает baseline-постановку из `task.txt` как **multi-task классификацию нескольких визуально наблюдаемых полей**
+с последующей **шаблонной сборкой описания**.
 
-## Что делает проект
+Подробный воспроизводимый отчёт собран в [REPORT.md](/Users/gipnotyin/Downloads/similis_baseline_project/REPORT.md).
 
-Проект решает не задачу свободной генерации текста, а задачу **контролируемого структурированного описания артефакта**.
+## Что предсказывает модель
 
-По изображению модель предсказывает 4 поля:
-
-- `type` — тип предмета
-- `part` — часть / зона предмета
-- `integrity` — целый / фрагмент
-- `material` — нормализованный материал
-
-Потом из этих полей собирается `auto_description` по фиксированному шаблону.
-
-Такой подход выбран специально:
-
-- он воспроизводим;
-- его проще отлаживать;
-- он лучше соответствует baseline-постановке из `task.txt`;
-- он позволяет честно пропускать поле, если модель не уверена.
-
-## Выбранный подход
-
-### 1. Нормализация данных
-
-Из исходного CSV строятся нормализованные поля:
+Из изображения предсказываются 4 нормализованных поля:
 
 - `type`
 - `part`
 - `integrity`
 - `material`
 
-Нормализация rule-based:
+Потом из них собирается `auto_description`.
 
-- `type` и `material` сводятся к небольшим устойчивым словарям;
-- `part` и `integrity` извлекаются из `name + description + fragm`;
-- для пропусков используются отдельные `*_is_missing` колонки.
-
-### 2. Group-aware split
-
-Так как у одного артефакта могут быть похожие кадры, split делается не по строкам, а по `group_key`.
-
-Сейчас:
-
-- `group_key` строится как proxy-ключ по `code`;
-- `train.csv` соответствует `train_inner`;
-- `val.csv` соответствует `val_inner`;
-- `test_open.csv` соответствует `test_open`.
-
-Текущие размеры split:
-
-- `train_inner`: `970`
-- `val_inner`: `208`
-- `test_open`: `209`
-
-### 3. Модель
-
-Используется multi-task классификатор:
-
-- один visual backbone из `timm`;
-- отдельная head для каждого поля.
-
-Основной backbone:
-
-- `convnext_tiny`
-
-### 4. Обучение
-
-В `train.py` реализован safe fine-tuning:
-
-- отдельный `head_lr`;
-- отдельный пониженный `backbone_lr`;
-- заморозка backbone на первые эпохи;
-- gradient clipping;
-- логирование метрик по эпохам;
-- сохранение `last.pt` и `best.pt`.
-
-### 5. Генерация auto_description
-
-`auto_description` собирается по фиксированному шаблону.
-
-Порядок полей:
+Правило сборки сейчас такое:
 
 1. `type`
 2. `material`
 3. `part`
 4. `integrity=фрагмент`
 
-Поле включается только если его confidence выше порога. Если модель не уверена, поле пропускается. Если ни одно поле не
-прошло пороги, возвращается:
+Поле включается только если confidence выше порога. Если ни одно поле не прошло порог, возвращается:
 
 `не удалось уверенно собрать описание`
 
-Пример:
+Примеры:
 
 - `изразец керамика профиль фрагмент`
 - `тарелка фаянс фрагмент`
 - `изразец профиль фрагмент`
 
-## Метрики и текущий статус
+## Данные и split
 
-### Что считается
+Сплит делается не по строкам, а по `group_key`, чтобы не разрывать близкие кадры одного артефакта между train/val/test.
 
-Для оценки качества используются:
+Текущее соответствие:
 
-- `accuracy` по каждому полю;
-- `macro-F1` по каждому полю;
-- `mean macro-F1` как агрегированная метрика выбора модели.
+- `data/processed/train.csv` -> `train_inner`
+- `data/processed/val.csv` -> `val_inner`
+- `data/processed/test_open.csv` -> `test_open`
 
-Для детального разбора есть отдельный скрипт:
+Размеры:
 
-- confusion matrices;
-- class-wise метрики;
-- таблицы удачных и неудачных примеров;
-- сравнение `pred_auto_description` и `gt_auto_description`.
+- `train_inner`: `970`
+- `val_inner`: `208`
+- `test_open`: `209`
 
-### Что подтверждено сейчас
+Текущий `group_key` строится как proxy по `code`, а не по настоящему `artifact_id`. Это рабочий baseline-вариант, но не
+идеальный идентификатор.
 
-После очистки `artifacts/` заново запущен retrain. Поэтому финальная detailed-оценка для нового checkpoint ещё не
-пересчитана.
+Важно:
 
-На момент последней проверенной записи
-в [artifacts/reports/train_log.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log.csv)
-подтверждены такие промежуточные результаты:
+- повторный `data_prep` с тем же `seed` воспроизводит те же split’ы;
+- в `splits/` теперь лежат и alias-файлы `train_inner.csv`, `val_inner.csv`, `test_open.csv`;
+- но у текущего proxy `group_key` почти нет повторов: в
+  [artifacts/reports/data_report/report.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/report.json)
+  `repeated_group_key_count = 0`. Это значит, что leakage-check формально проходит, но сила group-aware split в этой
+  версии ограничена самим proxy-ключом.
 
-- epoch 1: `mean_macro_f1 = 0.6000`
-- epoch 2: `mean_macro_f1 = 0.6581`
+## Модель и обучение
 
-По эпохе 2:
+Модель:
 
-- `type_macro_f1 = 0.6994`
-- `part_macro_f1 = 0.5293`
-- `integrity_macro_f1 = 0.6477`
-- `material_macro_f1 = 0.7561`
+- backbone: `convnext_tiny`
+- heads: отдельная head на каждое поле
 
-Это именно **промежуточные val-метрики retrain**, а не финальная оценка на `test_open`.
+Сводка по параметрам лежит в
+[artifacts/reports/model_summary.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/model_summary.json):
 
-## Что где лежит
+- всего параметров: `27,834,739`
+- backbone: `27,820,128`
+- heads: `14,611`
+
+В `train.py` реализован safe fine-tuning:
+
+- отдельный `head_lr`
+- пониженный `backbone_lr`
+- заморозка backbone на первые эпохи
+- gradient clipping
+- cosine schedule по двум param groups
+- сохранение `last.pt` и `best.pt`
+
+## Подтверждённые метрики
+
+Текущий основной checkpoint:
+
+- [artifacts/checkpoints/best.pt](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/checkpoints/best.pt)
+
+Он выбран по `val mean_macro_f1` и соответствует `epoch=8` из train-конфига с `image_size=384`.
+
+Текущая подтверждённая detailed-оценка этого checkpoint:
+
+Валидация:
+
+- `mean_macro_f1 = 0.8396`
+- `type_macro_f1 = 0.8559`
+- `part_macro_f1 = 0.8159`
+- `integrity_macro_f1 = 0.7600`
+- `material_macro_f1 = 0.9265`
+
+Источник:
+[artifacts/reports/val_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_detailed/metrics.json)
+
+Открытый тест:
+
+- `mean_macro_f1 = 0.7181`
+- `type_macro_f1 = 0.7665`
+- `part_macro_f1 = 0.5728`
+- `integrity_macro_f1 = 0.7235`
+- `material_macro_f1 = 0.8097`
+
+Источник:
+[artifacts/reports/test_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_detailed/metrics.json)
+
+Важно:
+
+- [artifacts/reports/train_log.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log.csv)
+  сейчас не надо считать source of truth для этого `best.pt`, потому что этот лог относится к более поздней частично
+  прерванной попытке retrain.
+- Для текущего лучшего checkpoint ориентироваться нужно на `best.pt` + `val_detailed/test_detailed`.
+
+## Ablation Study
+
+Для короткого сравнимого CPU-бюджета были прогнаны 3 эксперимента с одинаковым backbone, `image_size=224`, `epochs=4`,
+`freeze_backbone_epochs=1`.
+
+Итоговая таблица лежит в:
+
+- [artifacts/ablations/report/ablation_results.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/ablations/report/ablation_results.csv)
+- [artifacts/ablations/report/ablation_summary.md](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/ablations/report/ablation_summary.md)
+
+Результаты:
+
+- `pad + class_weights`: `val=0.7021`, `test=0.7010`
+- `pad + no_class_weights`: `val=0.7331`, `test=0.6163`
+- `stretch + class_weights`: `val=0.7676`, `test=0.6712`
+
+Короткий вывод:
+
+- на коротком `val`-бюджете лучшим оказался `stretch`;
+- на `test_open` лучшую переносимость показал `pad + class_weights`;
+- поэтому финальный основной baseline в проекте оставлен в safe-варианте `pad`, а результаты `stretch` трактуются как
+  полезный, но пока нестабильный сигнал.
+
+## Проверки воспроизводимости
+
+Есть отдельный артефакт, который проверяет `reload checkpoint -> same prediction`:
+
+- [artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json)
+
+В нём показано, что после повторной загрузки checkpoint logits совпадают по всем полям.
+
+## Data-Centric Артефакты
+
+Расширенный отчёт по данным лежит в:
+
+- [artifacts/reports/data_report/report.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/report.json)
+- [artifacts/reports/data_report/image_heuristics.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/image_heuristics.csv)
+- [artifacts/reports/data_report/field_candidates.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/field_candidates.csv)
+- [artifacts/reports/data_report/normalization_examples.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/normalization_examples.csv)
+- [artifacts/reports/data_report/label_policy.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/label_policy.csv)
+
+Примеры:
+
+- `row + image`: [row_image_examples.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/row_image_examples.png)
+- проблемные изображения: [problematic_images.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/problematic_images.png)
+- visual modes: [layout_mode_examples.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/layout_mode_examples.png)
+
+Что видно по отчёту:
+
+- `label_is_uncertain`: `68` строк
+- `layout_mode`: `single_object 75.5%`, `multi_view 21.8%`, `close_up 2.7%`
+- `bg_type`: `white_uniform 74.7%`, `light_photo 23.2%`, `dark_or_complex 2.1%`
+- `has_overlay_text`: около `9.8%`
+- `has_scale_bar`: почти не встречается в открытом наборе
+
+Факторный error analysis лежит в:
+
+- [artifacts/reports/val_error_factors/factor_breakdown.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_error_factors/factor_breakdown.csv)
+- [artifacts/reports/test_error_factors/factor_breakdown.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_error_factors/factor_breakdown.csv)
+- [artifacts/reports/val_error_factors/error_reason_breakdown.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_error_factors/error_reason_breakdown.csv)
+- [artifacts/reports/test_error_factors/error_reason_breakdown.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_error_factors/error_reason_breakdown.csv)
+
+Короткий вывод:
+
+- на `val` ошибки заметно чаще на `light_photo` и особенно `dark_or_complex` фоне;
+- `multi_view` сильнее бьёт по `auto_description_match`, чем `single_object`;
+- по heuristic taxonomy среди ошибок отдельно видны `layout_complexity`, `uncertain_or_label_noise` и
+  `visual_ambiguity_low_confidence`.
+
+Примеры осторожного поведения модели лежат в:
+
+- [artifacts/reports/val_cautious_examples/cautious_examples.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_cautious_examples/cautious_examples.csv)
+- [artifacts/reports/test_cautious_examples/cautious_examples.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_cautious_examples/cautious_examples.csv)
+
+## Структура репозитория
 
 ```text
 similis_baseline_project/
 ├── configs/
 │   ├── baseline.yaml
 │   ├── baseline_cpu.yaml
-│   └── safe_debug.yaml
+│   ├── safe_debug.yaml
+│   ├── ablation_cpu_base.yaml
+│   ├── ablation_cpu_no_class_weights.yaml
+│   └── ablation_cpu_stretch.yaml
 ├── data/
 │   ├── raw/
 │   └── processed/
@@ -158,7 +219,8 @@ similis_baseline_project/
 │   ├── checkpoints/
 │   ├── preds/
 │   ├── reports/
-│   └── figures/
+│   ├── figures/
+│   └── ablations/
 ├── src/similis_baseline/
 │   ├── data_prep.py
 │   ├── dataset.py
@@ -170,16 +232,24 @@ similis_baseline_project/
 │   ├── render_report.py
 │   ├── one_batch_debug.py
 │   ├── tiny_overfit.py
-│   └── data_report.py
+│   ├── data_report.py
+│   ├── transform_report.py
+│   ├── error_factor_report.py
+│   ├── train_log_report.py
+│   ├── cautious_examples.py
+│   ├── image_analysis.py
+│   └── ablation_report.py
 ├── requirements.txt
-└── README.md
+├── README.md
+└── REPORT.md
 ```
 
 Коротко по конфигам:
 
-- `configs/baseline.yaml` — основной baseline, более тяжёлый, ориентирован на полный запуск;
-- `configs/baseline_cpu.yaml` — практичный режим для полного retrain на CPU;
-- `configs/safe_debug.yaml` — короткий диагностический запуск, не финальный.
+- `configs/baseline.yaml` — основной baseline, `image_size=384`
+- `configs/baseline_cpu.yaml` — более практичный запуск для CPU
+- `configs/safe_debug.yaml` — короткий диагностический запуск
+- `configs/ablation_cpu_*.yaml` — сравнимые CPU-эксперименты для ablation study
 
 ## Как запустить
 
@@ -229,15 +299,29 @@ python -m src.similis_baseline.train --config configs/baseline.yaml
 python -m src.similis_baseline.train --config configs/baseline_cpu.yaml
 ```
 
-На выходе:
+Короткая ablation-study:
 
-- `artifacts/checkpoints/best.pt`
-- `artifacts/checkpoints/last.pt`
-- `artifacts/reports/train_log.csv`
+```bash
+python -m src.similis_baseline.train --config configs/ablation_cpu_base.yaml
+python -m src.similis_baseline.train --config configs/ablation_cpu_no_class_weights.yaml
+python -m src.similis_baseline.train --config configs/ablation_cpu_stretch.yaml
+python -m src.similis_baseline.ablation_report \
+  --configs configs/ablation_cpu_base.yaml configs/ablation_cpu_no_class_weights.yaml configs/ablation_cpu_stretch.yaml \
+  --output-dir artifacts/ablations/report
+```
 
-### 4. Детальная оценка
+### 4. Оценка
 
-Валидация:
+Быстрая оценка:
+
+```bash
+python -m src.similis_baseline.evaluate \
+  --checkpoint artifacts/checkpoints/best.pt \
+  --split val \
+  --output artifacts/reports/val_metrics.json
+```
+
+Подробная оценка:
 
 ```bash
 python -m src.similis_baseline.evaluate_detailed \
@@ -245,8 +329,6 @@ python -m src.similis_baseline.evaluate_detailed \
   --split val \
   --output-dir artifacts/reports/val_detailed
 ```
-
-Открытый тест:
 
 ```bash
 python -m src.similis_baseline.evaluate_detailed \
@@ -268,9 +350,6 @@ python -m src.similis_baseline.predict \
 
 - `image_file`
 - `auto_description`
-
-Дополнительно сохраняются:
-
 - `pred_*`
 - `confidence_*`
 
@@ -283,6 +362,7 @@ python -m src.similis_baseline.render_report \
   --pred-csv artifacts/preds/inference.csv \
   --images-root data/raw/images \
   --out-html artifacts/reports/inference_report.html \
+  --image-mode auto \
   --limit 20
 ```
 
@@ -292,20 +372,51 @@ python -m src.similis_baseline.render_report \
 python -m src.similis_baseline.render_report \
   --pred-csv artifacts/reports/val_detailed/predictions.csv \
   --out-html artifacts/reports/val_detailed/report.html \
+  --image-mode auto \
   --limit 20
 ```
 
-## Дополнительные скрипты
+Для больших отчётов лучше использовать `--image-mode link`.
 
-Это не обязательная часть инференса, а инженерная диагностика:
+Примеры:
 
-- `one_batch_debug.py` — shapes, loss и `pred vs gt` на одном батче;
-- `tiny_overfit.py` — tiny-overfit и проверка корректности pipeline;
-- `data_report.py` — отчёт по данным и split;
-- `evaluate_detailed.py` — подробная оценка и анализ ошибок;
-- `render_report.py` — HTML-отчёт с карточками изображений и предсказаний.
+Пагинация:
 
-Примеры запуска:
+```bash
+python -m src.similis_baseline.render_report \
+  --pred-csv artifacts/reports/val_detailed/predictions.csv \
+  --out-html artifacts/reports/val_detailed/report_page_2.html \
+  --image-mode link \
+  --offset 200 \
+  --limit 200
+```
+
+Только ошибки:
+
+```bash
+python -m src.similis_baseline.render_report \
+  --pred-csv artifacts/reports/val_detailed/predictions.csv \
+  --out-html artifacts/reports/val_detailed/errors.html \
+  --image-mode link \
+  --filter-col any_error \
+  --filter-value 1 \
+  --sort-by num_field_errors \
+  --sort-desc \
+  --limit 200
+```
+
+Сортировка по confidence:
+
+```bash
+python -m src.similis_baseline.render_report \
+  --pred-csv artifacts/reports/val_detailed/predictions.csv \
+  --out-html artifacts/reports/val_detailed/low_confidence.html \
+  --image-mode link \
+  --sort-by mean_confidence \
+  --limit 200
+```
+
+## Дополнительные диагностические скрипты
 
 `one_batch_debug.py`
 
@@ -361,58 +472,69 @@ python -m src.similis_baseline.data_report \
   --output-dir artifacts/reports/data_report
 ```
 
-`evaluate_detailed.py`
+`transform_report.py`
 
 ```bash
-python -m src.similis_baseline.evaluate_detailed \
-  --checkpoint artifacts/checkpoints/best.pt \
-  --split val \
-  --output-dir artifacts/reports/val_detailed
+python -m src.similis_baseline.transform_report \
+  --config configs/baseline.yaml \
+  --output-dir artifacts/reports/transform_report
 ```
 
-```bash
-python -m src.similis_baseline.evaluate_detailed \
-  --checkpoint artifacts/checkpoints/best.pt \
-  --split test \
-  --output-dir artifacts/reports/test_detailed
-```
-
-`render_report.py`
+`error_factor_report.py`
 
 ```bash
-python -m src.similis_baseline.render_report \
+python -m src.similis_baseline.error_factor_report \
   --pred-csv artifacts/reports/val_detailed/predictions.csv \
-  --out-html artifacts/reports/val_detailed/report.html \
-  --limit 20
+  --split-name val \
+  --output-dir artifacts/reports/val_error_factors
 ```
 
-Если входной CSV был собран через `predict.py`, то нужно дополнительно передать корень изображений:
+```bash
+python -m src.similis_baseline.error_factor_report \
+  --pred-csv artifacts/reports/test_detailed/predictions.csv \
+  --split-name test \
+  --output-dir artifacts/reports/test_error_factors
+```
+
+`train_log_report.py`
 
 ```bash
-python -m src.similis_baseline.render_report \
-  --pred-csv artifacts/preds/inference.csv \
-  --images-root data/raw/images \
-  --out-html artifacts/reports/inference_report.html \
-  --limit 20
+python -m src.similis_baseline.train_log_report \
+  --train-log artifacts/ablations/base/reports/train_log.csv \
+  --output-dir artifacts/ablations/base/reports/train_log_report
+```
+
+`cautious_examples.py`
+
+```bash
+python -m src.similis_baseline.cautious_examples \
+  --checkpoint artifacts/checkpoints/best.pt \
+  --pred-csv artifacts/reports/val_detailed/predictions.csv \
+  --output-dir artifacts/reports/val_cautious_examples
+```
+
+`ablation_report.py`
+
+```bash
+python -m src.similis_baseline.ablation_report \
+  --configs configs/ablation_cpu_base.yaml configs/ablation_cpu_no_class_weights.yaml configs/ablation_cpu_stretch.yaml \
+  --output-dir artifacts/ablations/report
 ```
 
 ## Ограничения
 
-- `group_key` сейчас строится по `code`, а не по настоящему `artifact_id`;
-- словари и нормализация rule-based, поэтому чувствительны к шуму разметки;
-- `part` остаётся самым шумным и неоднозначным полем;
-- текущий baseline не генерирует свободный текст и не пытается предсказывать датировку, функцию или культурную
-  интерпретацию;
-- финальная detailed-оценка для нового retrain должна быть пересчитана после завершения обучения.
+- `group_key` сейчас proxy по `code`, а не настоящий `artifact_id`
+- у текущего proxy почти нет повторов, поэтому group-aware split формально воспроизводим, но не даёт сильной защиты от
+  artifact-level leakage
+- нормализация словарей rule-based и чувствительна к шуму разметки
+- `part` остаётся самым шумным полем
+- baseline не пытается генерировать свободный текст и не предсказывает интерпретационные поля
+- preprocessing-вывод по `stretch` пока нельзя считать окончательным: на коротком CPU-study он выиграл `val`, но проиграл
+  `test_open`
 
-## Что делать дальше
+## Что ещё стоит сделать
 
-- закончить retrain и заново прогнать `evaluate_detailed.py` на `val` и `test_open`;
-- сохранить финальные confusion matrices и error analysis;
-- проверить preprocessing для close-up и multi-view изображений;
-- по возможности заменить proxy `group_key` на более сильный идентификатор артефакта;
-- откалибровать confidence thresholds для `auto_description`.
-
-Лучший baseline был получен при использовании укрупнённых словарей целевых полей, взвешенной функции потерь, а также
-двухстадийного обучения: сначала с замороженным backbone, затем с его разморозкой на малом learning rate. Это позволило
-поднять mean_macro_f1 на валидации до 0.84.
+- довести финальный retrain-log так, чтобы он однозначно соответствовал текущему `best.pt`
+- при необходимости заменить proxy `group_key` на более сильный artifact-level идентификатор
+- вручную проверить качество heuristic-разметки `layout_mode/bg_type/overlay_text` на небольшой подвыборке
+- при желании прогнать полноценный retrain уже после выбора окончательной preprocessing-политики

@@ -87,6 +87,7 @@ def main() -> None:
         train=True,
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     loader = DataLoader(
         dataset,
@@ -112,12 +113,14 @@ def main() -> None:
     images = batch["image"].to(device)
     outputs = model(images)
 
-    class_weights = build_class_weights(
-        train_csv=cfg["train_csv"],
-        fields=fields,
-        label_maps=label_maps,
-        max_weight=5.0,
-    )
+    class_weights = None
+    if bool(cfg.get("use_class_weights", True)):
+        class_weights = build_class_weights(
+            train_csv=cfg["train_csv"],
+            fields=fields,
+            label_maps=label_maps,
+            max_weight=5.0,
+        )
     loss_weights = cfg["loss_weights"]
 
     report = {
@@ -138,7 +141,7 @@ def main() -> None:
             logits,
             targets,
             mask,
-            class_weights=class_weights[field].to(device),
+            class_weights=class_weights[field].to(device) if class_weights is not None else None,
         )
         weighted_loss = loss_weights[field] * field_loss
         total_loss += weighted_loss

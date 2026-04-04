@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import os
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List
@@ -23,6 +24,48 @@ CONF_LABELS = {
     "pred_part": "confidence_part",
     "pred_integrity": "confidence_integrity",
 }
+
+
+def parse_scalar(value: str):
+    lowered = value.strip().lower()
+    if lowered in {"true", "false"}:
+        return lowered == "true"
+    if lowered in {"none", "null", "nan"}:
+        return None
+    try:
+        if "." in lowered:
+            return float(lowered)
+        return int(lowered)
+    except Exception:
+        return value
+
+
+def apply_filter(df: pd.DataFrame, filter_col: str, filter_value: str, filter_mode: str) -> pd.DataFrame:
+    if filter_col not in df.columns:
+        raise ValueError(f"Unknown --filter-col: {filter_col}")
+
+    series = df[filter_col]
+    parsed_value = parse_scalar(filter_value)
+
+    if filter_mode == "eq":
+        if parsed_value is None:
+            return df[series.isna()].copy()
+        return df[series.astype(str) == str(parsed_value)].copy()
+    if filter_mode == "contains":
+        return df[series.astype(str).str.contains(str(filter_value), case=False, na=False)].copy()
+
+    numeric = pd.to_numeric(series, errors="coerce")
+    compare_value = float(parsed_value)
+    if filter_mode == "gt":
+        return df[numeric > compare_value].copy()
+    if filter_mode == "ge":
+        return df[numeric >= compare_value].copy()
+    if filter_mode == "lt":
+        return df[numeric < compare_value].copy()
+    if filter_mode == "le":
+        return df[numeric <= compare_value].copy()
+
+    raise ValueError(f"Unsupported filter mode: {filter_mode}")
 
 
 def resolve_image_path(image_path: str, images_root: str | None = None) -> Path:
@@ -47,6 +90,19 @@ def image_to_base64(image_path: str, max_size: int = 900, images_root: str | Non
     img.save(buf, format="JPEG", quality=90)
     encoded = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"data:image/jpeg;base64,{encoded}"
+
+
+def image_to_link(
+    image_path: str,
+    out_html_path: str,
+    images_root: str | None = None,
+) -> str:
+    resolved_path = resolve_image_path(image_path, images_root=images_root).resolve()
+    out_dir = Path(out_html_path).resolve().parent
+    try:
+        return os.path.relpath(resolved_path, out_dir)
+    except Exception:
+        return str(resolved_path)
 
 
 def conf_badge(value: float | None) -> str:
@@ -90,11 +146,31 @@ def build_items(row: pd.Series) -> List[Dict]:
     return items
 
 
-def render_html(df: pd.DataFrame, title: str = "SIMILIS preview", images_root: str | None = None) -> str:
+def render_html(
+    df: pd.DataFrame,
+    title: str = "SIMILIS preview",
+    images_root: str | None = None,
+    out_html_path: str | None = None,
+    image_mode: str = "auto",
+) -> str:
     cards = []
+    resolved_image_mode = image_mode
+    if resolved_image_mode == "auto":
+        resolved_image_mode = "embed" if len(df) <= 50 else "link"
 
     for i, row in df.iterrows():
-        img_src = image_to_base64(row["image_file"], images_root=images_root)
+        if resolved_image_mode == "embed":
+            img_src = image_to_base64(row["image_file"], images_root=images_root)
+        elif resolved_image_mode == "link":
+            if out_html_path is None:
+                raise ValueError("out_html_path is required when image_mode='link'")
+            img_src = image_to_link(
+                row["image_file"],
+                out_html_path=out_html_path,
+                images_root=images_root,
+            )
+        else:
+            raise ValueError(f"Unsupported image_mode: {resolved_image_mode}")
         auto_description = row.get("auto_description", "")
         items = build_items(row)
 
@@ -115,7 +191,7 @@ def render_html(df: pd.DataFrame, title: str = "SIMILIS preview", images_root: s
             <section class="card">
               <h2>Пример {i + 1}</h2>
               <div class="img-wrap">
-                <img src="{img_src}" alt="artifact_{i+1}">
+                <img src="{img_src}" alt="artifact_{i+1}" loading="lazy" decoding="async">
               </div>
               <p class="desc"><b>Описание:</b> {auto_description}</p>
               <ul>
@@ -199,12 +275,44 @@ def main():
     parser.add_argument("--images-root", type=str, default=None)
     parser.add_argument("--title", type=str, default="SIMILIS — примеры предсказаний")
     parser.add_argument("--limit", type=int, default=20)
+    parser.add_argument("--offset", type=int, default=0)
+    parser.add_argument("--sort-by", type=str, default=None)
+    parser.add_argument("--sort-desc", action="store_true")
+    parser.add_argument("--filter-col", type=str, default=None)
+    parser.add_argument("--filter-value", type=str, default=None)
+    parser.add_argument(
+        "--filter-mode",
+        choices=["eq", "contains", "gt", "ge", "lt", "le"],
+        default="eq",
+    )
+    parser.add_argument(
+        "--image-mode",
+        choices=["auto", "embed", "link"],
+        default="auto",
+        help="embed = inline base64, link = use file paths, auto = embed for small reports and link for large ones",
+    )
     args = parser.parse_args()
 
     df = pd.read_csv(args.pred_csv)
-    df = df.head(args.limit).copy()
+    if (args.filter_col is None) != (args.filter_value is None):
+        raise ValueError("--filter-col and --filter-value must be passed together")
+    if args.filter_col is not None and args.filter_value is not None:
+        df = apply_filter(df, args.filter_col, args.filter_value, args.filter_mode)
+    if args.sort_by is not None:
+        if args.sort_by not in df.columns:
+            raise ValueError(f"Unknown --sort-by column: {args.sort_by}")
+        df = df.sort_values(args.sort_by, ascending=not args.sort_desc, kind="stable")
+    if args.offset < 0:
+        raise ValueError("--offset must be >= 0")
+    df = df.iloc[args.offset : args.offset + args.limit].copy()
 
-    html = render_html(df, title=args.title, images_root=args.images_root)
+    html = render_html(
+        df,
+        title=args.title,
+        images_root=args.images_root,
+        out_html_path=args.out_html,
+        image_mode=args.image_mode,
+    )
 
     out_path = Path(args.out_html)
     out_path.parent.mkdir(parents=True, exist_ok=True)

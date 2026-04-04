@@ -2,11 +2,11 @@ seed: 42
 image_size: 224
 batch_size: 16
 num_workers: 0
-epochs: 5
+epochs: 4
 lr: 0.0003
 backbone_lr: 0.00003
 weight_decay: 0.0001
-freeze_backbone_epochs: 2
+freeze_backbone_epochs: 1
 max_grad_norm: 1.0
 min_lr: 0.000001
 lr_schedule: cosine
@@ -22,10 +22,10 @@ matched_manifest_path: data/processed/matched_manifest.csv
 label_maps_path: data/processed/label_maps.json
 prep_stats_path: data/processed/prep_stats.json
 images_dir: data/raw/images
-checkpoint_dir: artifacts/checkpoints
-preds_dir: artifacts/preds
-reports_dir: artifacts/reports
-figures_dir: artifacts/figures
+checkpoint_dir: artifacts/ablations/base/checkpoints
+preds_dir: artifacts/ablations/base/preds
+reports_dir: artifacts/ablations/base/reports
+figures_dir: artifacts/ablations/base/figures
 fields:
   - type
   - part

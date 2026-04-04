@@ -12,6 +12,8 @@ min_lr: 0.000001
 lr_schedule: cosine
 backbone: convnext_tiny
 pretrained: true
+preprocess_mode: pad
+use_class_weights: true
 train_csv: data/processed/train.csv
 val_csv: data/processed/val.csv
 test_csv: data/processed/test_open.csv
@@ -39,7 +41,6 @@ confidence_thresholds:
   part: 0.50
   integrity: 0.55
   material: 0.50
-rare_class_min_count: 5
 split:
   val_size: 0.15
   test_size: 0.15

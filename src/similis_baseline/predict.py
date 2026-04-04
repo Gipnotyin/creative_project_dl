@@ -63,7 +63,11 @@ def main():
     device = torch_device()
     model.to(device)
 
-    transform = build_transforms(image_size=cfg["image_size"], train=False)
+    transform = build_transforms(
+        image_size=cfg["image_size"],
+        train=False,
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
+    )
     input_dir = Path(args.input_dir)
     paths = sorted(
         p

@@ -267,7 +267,21 @@ def normalize_type(row: pd.Series) -> Tuple[str, int]:
     return "прочее", 1
 
 
+def label_is_uncertain(row: pd.Series) -> int:
+    text = " ".join(
+        [
+            normalize_text(row.get("name", "")),
+            normalize_text(row.get("description", "")),
+            normalize_text(row.get("fragm", "")),
+        ]
+    )
+    return int(bool(re.search(r"\?|вероят|возможно|неяс|\(\?\)|сомнит", text)))
+
+
 def add_targets(df: pd.DataFrame) -> pd.DataFrame:
+    if "material_raw" not in df.columns:
+        df["material_raw"] = df["material"]
+
     type_vals = df.apply(normalize_type, axis=1)
     part_vals = df.apply(normalize_part, axis=1)
     integrity_vals = df.apply(normalize_integrity, axis=1)
@@ -284,6 +298,7 @@ def add_targets(df: pd.DataFrame) -> pd.DataFrame:
 
     df["material"] = material_vals.apply(lambda x: x[0])
     df["material_is_missing"] = material_vals.apply(lambda x: x[1]).astype(int)
+    df["label_is_uncertain"] = df.apply(label_is_uncertain, axis=1).astype(int)
 
     return df
 
@@ -354,6 +369,15 @@ def save_split_files(
         "test": mirror_dir / "test_open.csv",
     }
     for split_name, output_path in mirror_paths.items():
+        part = df[df["split"] == split_name].copy()
+        part.to_csv(output_path, index=False)
+
+    alias_paths = {
+        "train": mirror_dir / "train_inner.csv",
+        "val": mirror_dir / "val_inner.csv",
+        "test": mirror_dir / "test_open.csv",
+    }
+    for split_name, output_path in alias_paths.items():
         part = df[df["split"] == split_name].copy()
         part.to_csv(output_path, index=False)
 
@@ -485,6 +509,7 @@ def main() -> None:
         "test_rows": int((split_df["split"] == "test").sum()),
         "image_match_rate": float(df["has_image"].mean()),
         "images_found_on_disk": int(len(image_paths)),
+        "uncertain_rows": int(df["label_is_uncertain"].sum()),
     }
 
     with open(prep_stats_path, "w", encoding="utf-8") as f:

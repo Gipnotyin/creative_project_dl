@@ -447,6 +447,7 @@ def main() -> None:
         train=bool(args.train_aug),
         fields=fields,
         label_maps_path=label_maps_path,
+        preprocess_mode=str(cfg.get("preprocess_mode", "pad")),
     )
     candidate_df, candidate_summary = filter_candidate_pool(
         df=dataset.df,
