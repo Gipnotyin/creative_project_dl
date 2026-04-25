@@ -1,0 +1,314 @@
+{
+  "type": {
+    "best": [
+      {
+        "field": "type",
+        "label_idx": 1,
+        "label": "изразец",
+        "precision": 0.8793103448275862,
+        "recall": 1.0,
+        "f1": 0.9357798165137615,
+        "support": 51
+      },
+      {
+        "field": "type",
+        "label_idx": 5,
+        "label": "тарелка",
+        "precision": 0.7901234567901234,
+        "recall": 0.7529411764705882,
+        "f1": 0.7710843373493976,
+        "support": 85
+      },
+      {
+        "field": "type",
+        "label_idx": 2,
+        "label": "крышка",
+        "precision": 0.8,
+        "recall": 0.7407407407407407,
+        "f1": 0.7692307692307693,
+        "support": 27
+      },
+      {
+        "field": "type",
+        "label_idx": 0,
+        "label": "блюдце",
+        "precision": 0.5769230769230769,
+        "recall": 0.6,
+        "f1": 0.5882352941176471,
+        "support": 25
+      },
+      {
+        "field": "type",
+        "label_idx": 3,
+        "label": "миска",
+        "precision": 0.5625,
+        "recall": 0.5,
+        "f1": 0.5294117647058824,
+        "support": 18
+      }
+    ],
+    "worst": [
+      {
+        "field": "type",
+        "label_idx": 3,
+        "label": "миска",
+        "precision": 0.5625,
+        "recall": 0.5,
+        "f1": 0.5294117647058824,
+        "support": 18
+      },
+      {
+        "field": "type",
+        "label_idx": 0,
+        "label": "блюдце",
+        "precision": 0.5769230769230769,
+        "recall": 0.6,
+        "f1": 0.5882352941176471,
+        "support": 25
+      },
+      {
+        "field": "type",
+        "label_idx": 2,
+        "label": "крышка",
+        "precision": 0.8,
+        "recall": 0.7407407407407407,
+        "f1": 0.7692307692307693,
+        "support": 27
+      },
+      {
+        "field": "type",
+        "label_idx": 5,
+        "label": "тарелка",
+        "precision": 0.7901234567901234,
+        "recall": 0.7529411764705882,
+        "f1": 0.7710843373493976,
+        "support": 85
+      },
+      {
+        "field": "type",
+        "label_idx": 1,
+        "label": "изразец",
+        "precision": 0.8793103448275862,
+        "recall": 1.0,
+        "f1": 0.9357798165137615,
+        "support": 51
+      }
+    ]
+  },
+  "part": {
+    "best": [
+      {
+        "field": "part",
+        "label_idx": 4,
+        "label": "ручка",
+        "precision": 0.8333333333333334,
+        "recall": 0.7142857142857143,
+        "f1": 0.7692307692307693,
+        "support": 7
+      },
+      {
+        "field": "part",
+        "label_idx": 2,
+        "label": "профиль",
+        "precision": 0.6721311475409836,
+        "recall": 0.8913043478260869,
+        "f1": 0.7663551401869159,
+        "support": 46
+      },
+      {
+        "field": "part",
+        "label_idx": 0,
+        "label": "венчик",
+        "precision": 0.875,
+        "recall": 0.45161290322580644,
+        "f1": 0.5957446808510638,
+        "support": 31
+      },
+      {
+        "field": "part",
+        "label_idx": 1,
+        "label": "донце",
+        "precision": 0.56,
+        "recall": 0.5833333333333334,
+        "f1": 0.5714285714285714,
+        "support": 24
+      },
+      {
+        "field": "part",
+        "label_idx": 3,
+        "label": "прочее",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      }
+    ],
+    "worst": [
+      {
+        "field": "part",
+        "label_idx": 3,
+        "label": "прочее",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1
+      },
+      {
+        "field": "part",
+        "label_idx": 1,
+        "label": "донце",
+        "precision": 0.56,
+        "recall": 0.5833333333333334,
+        "f1": 0.5714285714285714,
+        "support": 24
+      },
+      {
+        "field": "part",
+        "label_idx": 0,
+        "label": "венчик",
+        "precision": 0.875,
+        "recall": 0.45161290322580644,
+        "f1": 0.5957446808510638,
+        "support": 31
+      },
+      {
+        "field": "part",
+        "label_idx": 2,
+        "label": "профиль",
+        "precision": 0.6721311475409836,
+        "recall": 0.8913043478260869,
+        "f1": 0.7663551401869159,
+        "support": 46
+      },
+      {
+        "field": "part",
+        "label_idx": 4,
+        "label": "ручка",
+        "precision": 0.8333333333333334,
+        "recall": 0.7142857142857143,
+        "f1": 0.7692307692307693,
+        "support": 7
+      }
+    ]
+  },
+  "integrity": {
+    "best": [
+      {
+        "field": "integrity",
+        "label_idx": 0,
+        "label": "фрагмент",
+        "precision": 0.9595959595959596,
+        "recall": 0.9644670050761421,
+        "f1": 0.9620253164556962,
+        "support": 197
+      },
+      {
+        "field": "integrity",
+        "label_idx": 1,
+        "label": "целый",
+        "precision": 0.36363636363636365,
+        "recall": 0.3333333333333333,
+        "f1": 0.34782608695652173,
+        "support": 12
+      }
+    ],
+    "worst": [
+      {
+        "field": "integrity",
+        "label_idx": 1,
+        "label": "целый",
+        "precision": 0.36363636363636365,
+        "recall": 0.3333333333333333,
+        "f1": 0.34782608695652173,
+        "support": 12
+      },
+      {
+        "field": "integrity",
+        "label_idx": 0,
+        "label": "фрагмент",
+        "precision": 0.9595959595959596,
+        "recall": 0.9644670050761421,
+        "f1": 0.9620253164556962,
+        "support": 197
+      }
+    ]
+  },
+  "material": {
+    "best": [
+      {
+        "field": "material",
+        "label_idx": 0,
+        "label": "керамика",
+        "precision": 0.8942307692307693,
+        "recall": 0.9587628865979382,
+        "f1": 0.9253731343283582,
+        "support": 97
+      },
+      {
+        "field": "material",
+        "label_idx": 3,
+        "label": "фарфор",
+        "precision": 0.8409090909090909,
+        "recall": 0.7115384615384616,
+        "f1": 0.7708333333333334,
+        "support": 52
+      },
+      {
+        "field": "material",
+        "label_idx": 4,
+        "label": "фаянс",
+        "precision": 0.603448275862069,
+        "recall": 0.6730769230769231,
+        "f1": 0.6363636363636364,
+        "support": 52
+      },
+      {
+        "field": "material",
+        "label_idx": 2,
+        "label": "стекло",
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "f1": 0.2857142857142857,
+        "support": 6
+      }
+    ],
+    "worst": [
+      {
+        "field": "material",
+        "label_idx": 2,
+        "label": "стекло",
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "f1": 0.2857142857142857,
+        "support": 6
+      },
+      {
+        "field": "material",
+        "label_idx": 4,
+        "label": "фаянс",
+        "precision": 0.603448275862069,
+        "recall": 0.6730769230769231,
+        "f1": 0.6363636363636364,
+        "support": 52
+      },
+      {
+        "field": "material",
+        "label_idx": 3,
+        "label": "фарфор",
+        "precision": 0.8409090909090909,
+        "recall": 0.7115384615384616,
+        "f1": 0.7708333333333334,
+        "support": 52
+      },
+      {
+        "field": "material",
+        "label_idx": 0,
+        "label": "керамика",
+        "precision": 0.8942307692307693,
+        "recall": 0.9587628865979382,
+        "f1": 0.9253731343283582,
+        "support": 97
+      }
+    ]
+  }
+}

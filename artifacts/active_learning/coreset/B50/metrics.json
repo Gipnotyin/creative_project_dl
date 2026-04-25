@@ -1,0 +1,37 @@
+{
+  "strategy": "coreset",
+  "budget": 50,
+  "train_rows": 400,
+  "status": "ok",
+  "val_metrics": {
+    "split": "val",
+    "rows": 150,
+    "val_loss": 0.5666541412472725,
+    "type_acc": 0.7876712328767124,
+    "type_macro_f1": 0.7507077556902956,
+    "part_acc": 0.6144578313253012,
+    "part_macro_f1": 0.5762874967719136,
+    "integrity_acc": 0.9266666666666666,
+    "integrity_macro_f1": 0.7410139695495213,
+    "material_acc": 0.8424657534246576,
+    "material_macro_f1": 0.7876269709882787,
+    "mean_macro_f1": 0.7139090482500022
+  },
+  "test_metrics": {
+    "split": "test",
+    "rows": 209,
+    "val_loss": 0.43682803719171454,
+    "type_acc": 0.7961165048543689,
+    "type_macro_f1": 0.7584790036732324,
+    "part_acc": 0.6422018348623854,
+    "part_macro_f1": 0.5322266364126829,
+    "integrity_acc": 0.8947368421052632,
+    "integrity_macro_f1": 0.6478247549019608,
+    "material_acc": 0.7874396135265701,
+    "material_macro_f1": 0.6433652051453098,
+    "mean_macro_f1": 0.6454739000332965
+  },
+  "best_metrics": {
+    "best_val_mean_macro_f1": 0.7139090482500022
+  }
+}

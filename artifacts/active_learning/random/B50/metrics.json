@@ -1,0 +1,37 @@
+{
+  "strategy": "random",
+  "budget": 50,
+  "train_rows": 400,
+  "status": "ok",
+  "val_metrics": {
+    "split": "val",
+    "rows": 150,
+    "val_loss": 0.6417018055915833,
+    "type_acc": 0.8013698630136986,
+    "type_macro_f1": 0.7691137676783609,
+    "part_acc": 0.7108433734939759,
+    "part_macro_f1": 0.6253288740245262,
+    "integrity_acc": 0.9333333333333333,
+    "integrity_macro_f1": 0.7044917257683214,
+    "material_acc": 0.8082191780821918,
+    "material_macro_f1": 0.6932659932659933,
+    "mean_macro_f1": 0.6980500901843004
+  },
+  "test_metrics": {
+    "split": "test",
+    "rows": 209,
+    "val_loss": 0.4828495786891186,
+    "type_acc": 0.7718446601941747,
+    "type_macro_f1": 0.7187483963834916,
+    "part_acc": 0.6788990825688074,
+    "part_macro_f1": 0.540551832339464,
+    "integrity_acc": 0.9282296650717703,
+    "integrity_macro_f1": 0.654925701706109,
+    "material_acc": 0.8019323671497585,
+    "material_macro_f1": 0.6545710974349034,
+    "mean_macro_f1": 0.642199256965992
+  },
+  "best_metrics": {
+    "best_val_mean_macro_f1": 0.6980500901843004
+  }
+}

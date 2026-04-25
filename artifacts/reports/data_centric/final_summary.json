@@ -1,0 +1,15 @@
+{
+  "best_al_checkpoint": "artifacts/active_learning/least_confidence/B100/checkpoints/best.pt",
+  "test_gold_rows": 209,
+  "rows_with_at_least_one_win": 37,
+  "rows_with_at_least_one_regression": 28,
+  "rows_with_at_least_one_both_wrong": 161,
+  "fields_with_gt": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "inference_csv": "artifacts/preds/inference_data_centric.csv",
+  "inference_csv_rows": 1388
+}

@@ -1,0 +1,21 @@
+{
+  "strategy": "hybrid",
+  "budget": 50,
+  "selected_count": 50,
+  "primary_field": "material",
+  "material_oracle_class_distribution": {
+    "фаянс": 26,
+    "фарфор": 8,
+    "керамика": 7,
+    "стекло": 4
+  },
+  "avg_pairwise_cosine_distance": 0.783355712890625,
+  "nuisance_shares": {
+    "close_up_share": 0.02,
+    "multi_view_share": 0.16,
+    "small_foreground_share": 0.0,
+    "has_overlay_text_share": 0.16,
+    "has_scale_bar_share": 0.0,
+    "dark_or_complex_bg_share": 0.04
+  }
+}

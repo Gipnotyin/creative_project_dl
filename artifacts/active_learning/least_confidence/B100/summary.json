@@ -1,0 +1,21 @@
+{
+  "strategy": "least_confidence",
+  "budget": 100,
+  "selected_count": 100,
+  "primary_field": "material",
+  "material_oracle_class_distribution": {
+    "фаянс": 58,
+    "фарфор": 19,
+    "керамика": 14,
+    "стекло": 4
+  },
+  "avg_pairwise_cosine_distance": 0.735519289970398,
+  "nuisance_shares": {
+    "close_up_share": 0.06,
+    "multi_view_share": 0.18,
+    "small_foreground_share": 0.0,
+    "has_overlay_text_share": 0.1,
+    "has_scale_bar_share": 0.0,
+    "dark_or_complex_bg_share": 0.03
+  }
+}

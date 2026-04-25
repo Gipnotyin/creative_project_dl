@@ -1,0 +1,14 @@
+{
+  "split": "val",
+  "rows": 150,
+  "val_loss": 0.5840779349207879,
+  "type_acc": 0.8013698630136986,
+  "type_macro_f1": 0.7577198926169177,
+  "part_acc": 0.6746987951807228,
+  "part_macro_f1": 0.6036455059710873,
+  "integrity_acc": 0.92,
+  "integrity_macro_f1": 0.7282608695652174,
+  "material_acc": 0.821917808219178,
+  "material_macro_f1": 0.6998494259363824,
+  "mean_macro_f1": 0.6973689235224012
+}

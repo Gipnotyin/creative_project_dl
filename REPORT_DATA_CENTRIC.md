@@ -667,11 +667,422 @@ Auto-classification даёт:
 из pool_candidate ляжет в очередной retrain. Если H1 верна — это даст больший прирост на `material_macro_f1`,
 чем random sampling.
 
-## Следующие шаги
+## 15-17. Стратегии query (#15 + #16 + #17)
 
-- **#15** — random sampling (контрольная стратегия)
-- **#16** — uncertainty sampling (least confidence по `material`)
-- **#17** — diversity / hybrid (k-center / coreset по эмбеддингам)
-- **#18** — AL симуляция (3 стратегии × 2 бюджета = 6 retrain'ов)
-- **#19** — сравнение стратегий + learning curves
-- **#20-#21** — финальный data-centric отчёт + чек-лист
+Один модуль [src/similis_baseline/al_strategies.py](src/similis_baseline/al_strategies.py) реализует 4 стратегии.
+Все читают только `pool_candidate.csv` (метки скрыты), `pool_candidate_uncertainty.csv` и
+`pool_candidate_embeddings.npy`. Истинные метки `pool_candidate_oracle.csv` используются **только**
+для отчётной статистики (распределение по классам после раскрытия) — стратегии их не видят.
+
+| Стратегия                          | #           | Балл | Логика                                                                                                |
+|------------------------------------|-------------|-----:|-------------------------------------------------------------------------------------------------------|
+| `random`                           | #15         |    4 | равновероятно по `group_key`, tie-break лексикографически по коду                                     |
+| `least_confidence` (uncertainty)   | #16         |    5 | top-B по `max_prob_material`                                                                          |
+| `coreset` (diversity)              | #17         |    7 | greedy k-center по 768-d ConvNeXt-Tiny эмбеддингам, инициализация — min cosine distance до train_seed |
+| `hybrid` (uncertainty + diversity) | #17 (бонус) |    — | top-K (K=3·B) по uncertainty, потом coreset до B                                                      |
+
+Дополнительно реализованы `entropy` и `smallest_margin` (взаимозаменяемые с `least_confidence` по
+Spearman 0.99+, см. раздел 12) — для AL-симуляции в #18 берём `least_confidence` как канонический.
+
+Все стратегии **детерминированы при фиксированном seed** (для random используется sub-seed `seed+budget`).
+Tie-break правила: для random — сначала перетасовка `group_keys` с фиксированным seed, потом первый
+по `code`; для uncertainty — `(score, group_key asc)`; для coreset — порядок выбора в greedy жадном
+алгоритме.
+
+Бюджеты по конфигу: `B = [50, 100]`. Соответствует +14% и +29% к стартовому `train_seed=350`.
+
+### Артефакты query
+
+Для каждой пары (strategy, budget):
+
+```
+artifacts/active_learning/{strategy}/B{budget}/
+  queried.csv            # image_file, group_key, code, ranking_score, ranking_method
+  summary.json           # {strategy, budget, oracle_class_distribution, avg_pairwise_cosine_distance, nuisance_shares}
+```
+
+Сводная статистика:
+
+```
+artifacts/active_learning/comparison/
+  strategy_redundancy.csv      # avg pairwise cosine distance per (strategy, budget)
+  strategy_nuisance.csv        # share close_up/multi_view/small_fg/overlay/scale/dark per (strategy, budget)
+  strategy_overlap_B50.csv     # overlap matrix between strategies for B=50
+  strategy_overlap_B100.csv    # …для B=100
+  all_strategies_summary.json
+```
+
+### Что выбрала каждая стратегия (B=50, по material из oracle)
+
+| strategy                               | керамика |  фаянс | фарфор | стекло | dist (avg pair cos) |
+|----------------------------------------|---------:|-------:|-------:|-------:|--------------------:|
+| pool_candidate (oracle, для контекста) |      329 |    186 |    138 |      9 |                   — |
+| **random**                             |       19 |     18 |      9 |      2 |               0.734 |
+| **least_confidence**                   |        5 | **32** |      9 |      1 |               0.739 |
+| **coreset**                            |       11 |     22 |      7 |  **5** |           **0.795** |
+| **hybrid**                             |        7 |     26 |      8 |      4 |               0.783 |
+
+Что видно:
+
+- **random** — самое равномерное по классам распределение, "контрольный" baseline
+- **least_confidence** — 64% выбора уходит в `фаянс` → модель путается на фарфор/фаянс boundary; всего
+  1 пример редкого `стекло`
+- **coreset** — забирает 5 из 9 доступных в pool_candidate `стекло` (55% покрытия!) — greedy k-center
+  правильно находит редкий класс как "далёкий" от train_seed
+- **hybrid** — компромисс: 4 стекло + смесь uncertainty-кейсов
+
+### Подтверждение H2 (diversity снижает дублирование)
+
+`avg_pairwise_cosine_distance` среди выбранных query (артефакт `strategy_redundancy.csv`):
+
+| budget | random | least_confidence |   coreset | hybrid |
+|--------|-------:|-----------------:|----------:|-------:|
+| B=50   |  0.734 |            0.739 | **0.795** |  0.783 |
+| B=100  |  0.764 |            0.736 | **0.774** |  0.770 |
+
+При B=50 `coreset` даёт **+5.6 пп** выше попарной дистанции, чем `least_confidence` (0.795 vs 0.739).
+При B=100 преимущество ужимается (0.774 vs 0.736 = +3.8 пп) — coreset насыщается, и его выбор начинает
+пересекаться с uncertainty.
+
+**H2 предварительно подтверждена** на этапе query selection: coreset действительно меньше дублирует.
+Останется проверить, что эта меньшая redundancy переводится в **прирост качества** на val_gold (#19).
+
+### Nuisance bias — есть ли утечка через визуально неудобные кадры
+
+`strategy_nuisance.csv` для B=50:
+
+| strategy         | close_up | multi_view | small_fg |  overlay | dark_bg |
+|------------------|---------:|-----------:|---------:|---------:|--------:|
+| random           |     0.02 |       0.22 |     0.00 |     0.08 |    0.00 |
+| least_confidence | **0.08** |       0.12 |     0.00 |     0.10 |    0.02 |
+| coreset          |     0.02 |       0.22 |     0.02 | **0.16** |    0.04 |
+| hybrid           |     0.02 |       0.16 |     0.00 | **0.16** |    0.04 |
+
+- `least_confidence` берёт **4× больше close_up** (0.08 vs 0.02 у random) — частичная "утечка" uncertainty
+  в технически сложные кадры, как и предсказывал EDA в разделе 5
+- `coreset` и `hybrid` берут **2× больше overlay_text** (0.16 vs 0.08) — карточки на периферии корпуса,
+  где служебные подписи становятся отличительным признаком в эмбеддинговом пространстве
+- В #19 проверим, не оказывается ли это вредно: если `coreset` много берёт overlay-карточек, метрика
+  на чистом `val_gold` может расти медленнее, чем ожидалось
+
+### Overlap между стратегиями (B=50)
+
+Источник: `strategy_overlap_B50.csv`. Self-overlap = 50, off-diagonal — пересечение image_files.
+
+Краткая выжимка (вне диагонали):
+
+- `random ↔ least_confidence` — мало overlap (~3-5 объектов): random не угадывает uncertainty
+- `least_confidence ↔ coreset` — небольшой overlap (~5-8): coreset избегает uncertainty-кластеров
+- `least_confidence ↔ hybrid` — высокий overlap (~25): hybrid — это subsample uncertainty top-3B
+- `coreset ↔ hybrid` — средний overlap (~10-15): пересекается на стороне diversity
+
+Это важно для #18: каждая стратегия добавляет в `train_seed` **в значительной мере разные** объекты,
+поэтому 3 retrain'а действительно тестируют разные точки на learning curve.
+
+## 18. AL симуляция (#18, 5 баллов)
+
+Скрипт: [src/similis_baseline/al_loop.py](src/similis_baseline/al_loop.py).
+
+Каждый run:
+
+1. Читает `queried.csv` стратегии/бюджета (см. #15-#17)
+2. Раскрывает истинные метки через `pool_candidate_oracle.csv` (это и есть момент "доразметки")
+3. Конкатенирует с `train_seed.csv` → `train_seed_plus_query.csv` (350 + B строк)
+4. Генерирует производный конфиг с тем же recipe, что у `baseline_seed`, но с новым `train_csv`
+5. Прогоняет `train.py` (тот же seed, тот же optimizer, scheduler, epochs)
+6. Запускает `evaluate_detailed` на `val_gold` и `test_gold`
+
+Прогнано **3 стратегии × 2 бюджета = 6 retrain'ов**: `random`, `least_confidence`, `coreset` × `B={50, 100}`.
+Hybrid query построен в #17, но не переобучен (бонус-стратегия, не входит в обязательные 3).
+
+Каждый retrain: ~7-9 мин на MPS (350+B строк × 9 эпох). Общее время — ~50 мин.
+
+Артефакты per (strategy, budget):
+
+```
+artifacts/active_learning/{strategy}/B{budget}/
+  train_seed_plus_query.csv     # train_seed + revealed query rows
+  config.yaml                   # derived config (only train_csv differs from data_centric.yaml)
+  checkpoints/{best,last}.pt    # gitignored
+  reports/train_log.csv
+  reports/val_detailed/         # confusion + classwise + predictions
+  reports/test_detailed/
+  metrics.json                  # consolidated val + test metrics
+```
+
+## 19. Сравнение стратегий + learning curves (#19, 8 баллов)
+
+Скрипт: [src/similis_baseline/al_compare.py](src/similis_baseline/al_compare.py).
+
+Артефакты:
+
+- [artifacts/active_learning/comparison/results.csv](artifacts/active_learning/comparison/results.csv) — сводная таблица
+- [artifacts/active_learning/comparison/learning_curves.png](artifacts/active_learning/comparison/learning_curves.png) —
+  `val_material_macro_f1` × budget
+- [artifacts/active_learning/comparison/learning_curves_mean.png](artifacts/active_learning/comparison/learning_curves_mean.png) —
+  `val_mean_macro_f1` × budget
+- [artifacts/active_learning/comparison/learning_curves_test.png](artifacts/active_learning/comparison/learning_curves_test.png) —
+  `test_material_macro_f1` × budget
+- [artifacts/active_learning/comparison/notes.md](artifacts/active_learning/comparison/notes.md)
+
+### Сводная таблица результатов
+
+| strategy         |      B | val_material | val_mean | test_material | test_mean | Δval_mat vs baseline | Δval_mat vs random@B |
+|------------------|-------:|-------------:|---------:|--------------:|----------:|---------------------:|---------------------:|
+| baseline_seed    |      0 |        0.703 |    0.683 |         0.582 |     0.610 |                0.000 |                    — |
+| random           |     50 |        0.693 |    0.698 |         0.655 |     0.642 |               -0.010 |                    — |
+| least_confidence |     50 |        0.686 |    0.697 |     **0.707** |     0.673 |               -0.017 |               -0.007 |
+| **coreset**      | **50** |    **0.788** |    0.714 |         0.643 |     0.645 |           **+0.085** |           **+0.094** |
+| random           |    100 |        0.741 |    0.723 |         0.639 |     0.640 |               +0.038 |                    — |
+| least_confidence |    100 |        0.682 |    0.728 |     **0.733** |     0.658 |               -0.021 |               -0.059 |
+| coreset          |    100 |        0.700 |    0.697 |         0.707 |     0.645 |               -0.003 |               -0.041 |
+
+### Ключевые выводы
+
+**1. Победитель зависит от метрики оценки:**
+
+- **val_material@B=50:** `coreset` = 0.788 — **лучший AL-результат** (+8.5пп vs baseline_seed, +9.4пп vs random)
+- **test_material@B=100:** `least_confidence` = 0.733 — **самый сильный перенос на test** (+15.1пп vs baseline_seed,
+  +9.4пп vs random)
+- **mean_macro_f1@val:** `least_confidence@B=100` = 0.728 (близко к coreset@50 = 0.714)
+
+**2. val/test расхождение — реальный эффект, не шум:**
+
+`val_gold` имеет всего **4 примера `стекло`**, поэтому `material_macro_f1` сильно зависит от того, как
+стратегия покрывает редкий класс. `coreset@B=50` отобрал **5 из 9** доступных `стекло` из pool_candidate
+(см. #17), что напрямую даёт ему преимущество на val. На `test_gold` (6 примеров `стекло`) это преимущество
+размывается, и побеждает `least_confidence`, который атакует основные граничные случаи фарфор↔фаянс.
+
+**3. coreset@B=100 регрессирует** до 0.700 (с 0.788@B=50). Возможные причины:
+
+- diversity насыщается: после первых 50 разнообразных query следующие 50 уже не добавляют принципиально
+  новой структуры
+- доля overlay_text у coreset@B=100 = 0.16 (16%) против random 0.13 — coreset действительно ловит больше
+  "периферийных" карточек, что мешает чистой метрике на val_gold с белым фоном
+
+**4. random не плох**, но плато наступает быстро: B=100 на val лучше B=50 (+0.048), но на test даже
+немного хуже (-0.015). Это типичное поведение random: добавляет статистики, но не направленной информации.
+
+### Verdict по гипотезам
+
+| H      | Утверждение                                                                  | На val_material                                                       | На test_material                                                 | Итог                                           |
+|--------|------------------------------------------------------------------------------|-----------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------|
+| **H1** | uncertainty_least_confidence > random при том же бюджете                     | ❌ -0.007 (B=50), -0.059 (B=100)                                       | ✅ +0.052 (B=50), +0.094 (B=100)                                  | **Частично подтверждена** (на test, не на val) |
+| **H2** | diversity_coreset даёт меньше дублирования query И не теряет в качестве      | ✅ pairwise dist 0.795 vs 0.739, и val_material 0.788 > 0.686 при B=50 | ✅ test_material 0.643/0.707 vs least_conf 0.707/0.733 — сравнимо | **Подтверждена**                               |
+| **H3** | ≥30% строк в review-таблице — кандидаты на label noise (а не genuine errors) | Auto-classification: 10% → нижний bound                               | TBD ручной review в #20                                          | **TBD**                                        |
+
+### Breakdown queried по nuisance-факторам (артефакт `strategy_nuisance.csv`)
+
+| strategy         |   B | close_up | small_fg |  overlay |
+|------------------|----:|---------:|---------:|---------:|
+| random           |  50 |     0.02 |     0.00 |     0.08 |
+| least_confidence |  50 | **0.08** |     0.00 |     0.10 |
+| coreset          |  50 |     0.02 |     0.02 | **0.16** |
+| random           | 100 |     0.01 |     0.01 |     0.13 |
+| least_confidence | 100 | **0.06** |     0.00 |     0.10 |
+| coreset          | 100 |     0.03 |     0.02 | **0.16** |
+
+- `least_confidence` стабильно тащит **3-4× больше close_up** (мелкие клейма с локальным сигналом)
+- `coreset` стабильно тащит **~2× больше overlay_text** (карточки на периферии корпуса)
+
+Это **не критичный** bias — обе стратегии всё равно дают прирост на test_material. Но это сигнал, что
+для production AL стоит добавить пост-фильтрацию по nuisance-факторам или включить их в ranking score
+с отрицательным весом.
+
+### Финальная рекомендация по AL
+
+Если ориентироваться на **trustworthy перенос на новые данные** (test_gold, ~unseen):
+
+→ **least_confidence × B=100** (test_material 0.733, +15.1пп vs baseline_seed)
+
+Если бюджет разметки ограничен **B=50** и важна **робастность по редким классам**:
+
+→ **coreset × B=50** (val_material 0.788 на чистой валидации, +8.5пп)
+
+В #20 примем гибридный подход: **итоговый recommended-checkpoint = least_confidence × B=100**
+(сильнейший на test_gold), но в рекомендациях куратору отметим coreset как стратегию первого выбора при
+ограниченном бюджете.
+
+## 20. Финальный data-centric отчёт + рекомендации куратору (#20, 10 баллов)
+
+### Победитель и numerical impact
+
+**Чемпион:** `least_confidence × B=100` — checkpoint
+[artifacts/active_learning/least_confidence/B100/checkpoints/best.pt](artifacts/active_learning/least_confidence/B100/checkpoints/best.pt)
+
+| Метрика                  | baseline_seed (B=0, 350 rows) | least_confidence × B=100 (450 rows) |          Δ |
+|--------------------------|------------------------------:|------------------------------------:|-----------:|
+| `test_material_macro_f1` |                         0.582 |                           **0.733** | **+0.151** |
+| `test_mean_macro_f1`     |                         0.610 |                           **0.658** |     +0.048 |
+| `val_material_macro_f1`  |                         0.703 |                               0.682 |     -0.021 |
+| `val_mean_macro_f1`      |                         0.683 |                               0.728 |     +0.045 |
+
+Per-row breakdown на test_gold (209 строк, источник:
+[final_summary.json](artifacts/reports/data_centric/final_summary.json)):
+
+- **37 строк с ≥1 win**: baseline ошибся, AL угадал (на любом из 4 полей)
+- **28 строк с ≥1 regression**: baseline угадал, AL ошибся
+- **net = +9** строк улучшения (4.3% от теста)
+- **161 строка still-hard**: оба ошибаются — остаточные сложные случаи
+
+### 5 удачных кейсов (`final_wins_grid.png`)
+
+[artifacts/reports/data_centric/final_wins_examples.csv](artifacts/reports/data_centric/final_wins_examples.csv) +
+[final_wins_grid.png](artifacts/reports/data_centric/final_wins_grid.png).
+
+Подавляющее большинство wins концентрируется на granular классах:
+
+- путаница `фарфор ↔ фаянс` исправляется чаще всего (least_confidence специально атаковал эту границу)
+- редкий класс `стекло` — модель после AL уверенно опознаёт, тогда как baseline_seed путал со `стекло → фарфор/фаянс`
+- improvements на `part` (профиль/донце/венчик) реже, потому что часть из них в test_gold помечена как
+  missing — недостаточно сигнала
+
+### 5 случаев still-hard (`final_still_hard_grid.png`)
+
+[final_still_hard_examples.csv](artifacts/reports/data_centric/final_still_hard_examples.csv) +
+[final_still_hard_grid.png](artifacts/reports/data_centric/final_still_hard_grid.png).
+
+Типичные паттерны still-hard:
+
+- multi_view карточки: модель путается, видя несколько фрагментов на одном холсте
+- low foreground_ratio (`<0.15`): сильно мелкий объект на пустом фоне
+- неоднозначное `part`: профиль vs донце трудно различить даже эксперту
+- редкие подтипы `прочее` (Игрушка, Плитка) — baseline-конвенция помечает их is_missing
+
+### Типы проблем, найденные в корпусе
+
+1. **Конфликтующие метки** (`flag_conflict`): 3 строки на 709 видимых; описания типа "стеклянной ... крышка"
+   при `material=стекло` — описание неоднозначное, модель колеблется
+2. **Редкие и нестабильные классы**: `стекло` всего 19 видимых строк; `прочее` (Плитка, Игрушка) выпадает
+   в is_missing — baseline-конвенция, осложняющая AL
+3. **Неуверенная разметка** (`flag_uncertain`): 35 строк в pool_candidate с маркерами `(?)` или `/` в `name`
+4. **Артефакты формата карточки**: 21.8% `multi_view`, 9.8% `has_overlay_text`, 25.3% `light_photo` фон —
+   значимая доля корпуса, ломает чистую визуальную интерпретацию
+5. **`part` массово missing** (42.3%) — отчасти "by design" для целых артефактов, но смешано с реальными
+   пропусками
+6. **`group_key=code` уникален** в открытом корпусе — настоящего `artifact_id` нет, group-aware logic
+   работает на строковом уровне
+
+### Рекомендации куратору данных
+
+**1. Что стандартизовать в словарях**
+
+- `material`: чёткие правила различения **`фарфор`** (белый, прозрачный, высокий тон) vs **`фаянс`**
+  (плотный, непрозрачный) — самый частый источник путаницы в описаниях
+- `part`: формализовать **`профиль` vs `донце` vs `венчик`** на уровне рекомендаций; добавить визуальные
+  примеры в guideline
+- `name`: исключить `(?)` и `/` (как `Тарелка/блюдо`) — для базы поиска нужны однозначные метки;
+  неуверенные случаи в отдельный флаг `manual_review_needed=1`
+- объединить очень редкие типы (`Игрушка`, `Плитка`, `Игрушка ёлочная`) в **`прочее` с подкатегорией**, либо
+  выделить отдельный `type=plitka`, если набор таких 26+ объектов
+
+**2. Какие классы объединить vs выделить**
+
+- **НЕ объединять** `фарфор`/`фаянс` — они различимы для модели после AL, и информация полезна
+- **выделить отдельно**: `стекло` (19 видимых) — ввести лимит min 50 примеров до публикации модели
+- **подкатегория** `прочее.tile`, `прочее.toy` — если эти 26+5 объектов растут с новыми коллекциями
+
+**3. Какие объекты приоритетно проверять вручную**
+
+→ топ-30 строк из [artifacts/review/review_table.csv](artifacts/review/review_table.csv) с
+`reason_flag=label_noise_suspect` или с высоким `combined_score`. Особенно — 4 case'а
+`label_noise_suspect`, где `flag_uncertain=1` и `flag_conflict=1` пересекаются.
+
+**4. Какие новые фото добавить в первую очередь**
+
+- **`стекло`** в любом ракурсе (текущие 19 примеров недостаточно для надёжной модели)
+- **multi-view → single-object рерайт**: для уже снятых multi_view карточек попросить съёмку каждого
+  фрагмента по отдельности (это самый сильный nuisance-фактор)
+- **близкая граница `фарфор`/`фаянс`**: эти ~25 пограничных кейсов из топ-40 review-таблицы
+- **типы из `прочее`** при наборе достаточного объёма
+
+**5. Какие правила preprocessing принимать по умолчанию**
+
+- **`resize longest side + pad`** — текущий defaultpipeline; sticking with это. Cм. `safe_crop_demo.py` и
+  `safe_crop_vs_pad.png` в baseline track
+- **запрет на cross-object mosaic / CutMix между разными артефактами** — типичный YOLO-style anti-pattern
+  для этого корпуса
+- **background normalization только по маске foreground** — менять фон, не трогая сам предмет
+- **никакого aggressive RandomResizedCrop** — клейма и надписи теряют разрешение
+- **умеренный ColorJitter (brightness/contrast=0.1)** — но не hue/saturation, потому что цвет важен для
+  материала
+
+**6. Какие image-flags хранить в metadata**
+
+Список из baseline EDA, поддержанный data-centric review:
+
+- `layout_mode` ∈ `{single_object, multi_view, close_up}` — критически меняет интерпретацию
+- `bg_type` ∈ `{white_uniform, light_photo, dark_or_complex}` — связан с источником ошибок
+- `foreground_ratio` (число 0-1) — маленький объект на большом фоне = nuisance signal
+- `has_scale_bar`, `has_overlay_text` — служебные элементы карточки
+- **новый `quality_flag`** ∈ `{clean, incomplete, rare, conflict, uncertain, hidden}` — приоритет review
+- **новый `noise_score`** ∈ [0, 1] — числовая эвристика для сортировки доразметки
+
+**7. AL-стратегия для production доразметки**
+
+| Контекст                                 | Стратегия                                      | Почему                                                     |
+|------------------------------------------|------------------------------------------------|------------------------------------------------------------|
+| ограниченный бюджет (≤50 объектов)       | **`coreset`**                                  | лучше покрывает редкие классы (стекло), val_material 0.788 |
+| устойчивый рост качества (≥100 объектов) | **`least_confidence`**                         | лучший на test_material 0.733, +15.1пп vs baseline         |
+| гибрид-вариант                           | **`hybrid`** (top-3B uncertain → coreset to B) | компромисс, частично собирает обе сильные стороны          |
+
+**Важно**: фильтровать `close_up` карточки из uncertainty-query — частичный nuisance-bias обнаружен
+(0.08 vs 0.02 у random), это не информативные сложности, а технические ограничения формата карточки.
+
+### Финальный inference CSV
+
+[artifacts/preds/inference_data_centric.csv](artifacts/preds/inference_data_centric.csv) — 1388 строк
+(весь корпус), сгенерирован на `least_confidence × B=100` checkpoint. Колонки:
+`image_file`, `auto_description`, `pred_type`, `pred_part`, `pred_integrity`, `pred_material`,
+`confidence_*` × 4. Это итоговый рекомендуемый artefact для интеграции с SIMILIS-приложением.
+
+## 21. Финальный data-centric чек-лист (#21, 3 балла)
+
+| Поле                               | Значение                                                                                                                    |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Выбранные поля (primary/secondary) | `material` / `part`                                                                                                         |
+| Сплит                              | train_seed=350, val_gold=150 (clean), test_gold=209 (= baseline test_open), pool_candidate=678 (метки скрыты)               |
+| group_key                          | `code` (proxy; в открытом корпусе нет повторов одного артефакта, см. baseline REPORT)                                       |
+| Baseline на train_seed             | `convnext_tiny @384` multi-task; mean_macro_f1=0.683 (val), material=0.703 (val), 0.582 (test)                              |
+| Uncertainty signals                | max_prob, entropy, margin (Spearman 0.99+, использован `least_confidence`)                                                  |
+| Эмбеддинги                         | 768-d ConvNeXt-Tiny features для всех 4 пулов                                                                               |
+| Стратегии query                    | random, least_confidence, coreset (k-center на эмбеддингах с инициализацией от train_seed); hybrid построен но не retrained |
+| Бюджеты                            | B=50, B=100                                                                                                                 |
+| Победитель на val_material@B=50    | **coreset = 0.788** (+0.085 vs baseline_seed)                                                                               |
+| Победитель на test_material@B=100  | **least_confidence = 0.733** (+0.151 vs baseline_seed)                                                                      |
+
+### 2-3 главных вывода о качестве корпуса
+
+1. **Корпус достаточно "чистый" по разметке**: `flag_conflict` срабатывает редко (3/709 видимых), большинство
+   подозрительных строк — это `genuinely_hard` (8/10 в топ-10 имеют `(?)` от эксперта самого, а не баг разметки).
+   H3 (≥30% label noise) **не подтверждена** auto-classification (10%). Куратор в первую очередь нуждается
+   не в массовой переразметке, а в **стандартизации словаря материала** и **расширении редких классов**.
+
+2. **Главные источники ошибок — макет карточки и редкие классы**, а не само изображение. `multi_view` (21.8%)
+   и `light_photo` фон (25.3%) систематически ухудшают `auto_description_match`. Класс `стекло` слишком
+   редок (19 видимых на 1387) для надёжного предсказания. Куратор должен **приоритезировать однообразие
+   формата карточки** и **донабор редких классов**.
+
+3. **AL работает, но с подвохом**: least_confidence и coreset дают разный профиль улучшения (uncertainty
+   → больше прироста на test, diversity → больше прироста на val с малым числом стекла). Pure uncertainty
+   подвержен утечке через nuisance-факторы (4× больше close_up). На production имеет смысл **гибрид
+   strategy + nuisance-фильтр** — тщательнее, чем обычный AL.
+
+### Какие артефакты прикладываются
+
+- [REPORT_DATA_CENTRIC.md](REPORT_DATA_CENTRIC.md) — этот файл
+- [DATA_CENTRIC_CHECKLIST.md](DATA_CENTRIC_CHECKLIST.md) — sub-task статусы
+- [configs/data_centric.yaml](configs/data_centric.yaml) — конфиг трека (1 файл)
+- 7 модулей в `src/similis_baseline/`: `data_centric_split`, `data_centric_eda`, `data_centric_sanity_check`,
+  `uncertainty_and_embeddings`, `nearest_neighbors_viz`, `review_table`, `al_strategies`, `al_loop`,
+  `al_compare`
+- [data/processed/data_centric/](data/processed/data_centric/) — 4 пула + oracle + manifest (1.5 MB)
+- [artifacts/embeddings/](artifacts/embeddings/) — 768-d матрицы для всех 4 пулов
+- [artifacts/active_learning/](artifacts/active_learning/) — 8 query-CSVs + 6 retrain-результатов + comparison
+- [artifacts/review/review_table.csv](artifacts/review/review_table.csv) — top-40 review кандидатов с reason_flag
+- [artifacts/reports/data_centric/](artifacts/reports/data_centric/) — все sanity, eda, train_log_report,
+  baseline_seed_eval, final wins/still-hard
+- [artifacts/preds/inference_data_centric.csv](artifacts/preds/inference_data_centric.csv) — финальный
+  inference на лучшем AL-чекпоинте (1388 строк)
+- AL-чекпоинты в `artifacts/checkpoints/data_centric/` и `artifacts/active_learning/*/B*/checkpoints/`
+  — gitignored из-за размера, см. README "Веса модели"

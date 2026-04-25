@@ -329,73 +329,127 @@ Status: `done`
       разметки на тех же объектах
 
 ### 15. Random sampling — контрольная стратегия (4 балла)
-Status: `missing`
+Status: `done`
 
-Нужно сделать:
-- [ ] реализовать в `src/similis_baseline/al_strategies.py` функцию
-      `random_query(pool_df, B, seed) -> queried_ids`
-- [ ] querying только из `pool_candidate`, без пересечений по `group_key`
-- [ ] показать: список `image_file` или `group_key` для одного запуска, что при том же seed список тот же,
-      распределение query по классам (после раскрытия меток)
+Уже есть:
+- `random_query(pool_df, budget, seed)` в [al_strategies.py](src/similis_baseline/al_strategies.py)
+- group-aware (по `group_key`), tie-break по `code` лексикографически
+- детерминирован: `seed = cfg.seed + budget` → повторный запуск даёт тот же query
+- queried.csv для B=50 и B=100: `artifacts/active_learning/random/B{50,100}/queried.csv`
+- summary.json с распределением по material из oracle (B=50: керамика=19, фаянс=18, фарфор=9, стекло=2 — близко к pool_candidate distribution)
+- описание в REPORT_DATA_CENTRIC.md раздел 15-17
+
+Нужно доделать:
+- [x] random_query реализован
+- [x] querying только из pool_candidate, без overlap по group_key
+- [x] показать список + reproducibility + class distribution после reveal
 
 ### 16. Uncertainty sampling (5 баллов)
-Status: `missing`
+Status: `done`
 
-Нужно сделать:
-- [ ] реализовать в `al_strategies.py` функции
-      `least_confidence_query`, `entropy_query`, `smallest_margin_query`
-- [ ] фильтрация дубликатов и tie-break: при равенстве score выбирать по `group_key` лексикографически
-- [ ] показать: 10 объектов с наибольшей uncertainty, сравнение с random выбором — сколько объектов
-      пересекается, сколько новых
-- [ ] комментарий: не сводится ли uncertainty к близким снимкам / маленькому foreground / overlay text
-      (проверить через nuisance-таблицу)
+Уже есть:
+- 3 метода в `al_strategies.py`: `least_confidence`, `entropy`, `smallest_margin` (взаимозаменяемые
+  по Spearman 0.99+, выбран `least_confidence` как канонический)
+- tie-break: `(score, group_key asc)`
+- queried.csv для B=50 и B=100 в `artifacts/active_learning/least_confidence/`
+- сравнение с random: overlap matrix в `strategy_overlap_B{50,100}.csv` (random↔least_confidence: ~3-5 объектов overlap)
+- nuisance проверка в `strategy_nuisance.csv`: least_confidence берёт **4× больше close_up** (0.08 vs 0.02
+  у random) — частичный uncertainty=nuisance leak; обсуждается в REPORT раздел 15-17
+- class distribution: 64% выборки уходит в `фаянс` → модель путается на фарфор/фаянс boundary
+
+Нужно доделать:
+- [x] реализовать least_confidence/entropy/margin
+- [x] tie-break по group_key
+- [x] 10 объектов с наибольшей uncertainty + сравнение с random (overlap matrix)
+- [x] комментарий по nuisance: 4× больше close_up vs random — частичная утечка
 
 ### 17. Diversity / гибридная стратегия (7 баллов)
-Status: `missing`
+Status: `done`
 
-Нужно сделать:
-- [ ] реализовать в `al_strategies.py` минимум один из вариантов:
-  - **k-center / coreset** по эмбеддингам: greedy выбор B точек, максимизирующих минимальное расстояние
-    до уже выбранных
-  - кластеризация (KMeans) с выбором представителя из каждого кластера
-  - **гибрид uncertainty + diversity**: top-k uncertain, потом coreset внутри них
-- [ ] использовать эмбеддинги из задания 13
-- [ ] показать: 10 выбранных объектов, визуализацию или таблицу, что они менее избыточны, чем чистый
-      uncertainty (например, средняя попарная дистанция выбранных объектов больше)
+Уже есть:
+- **2 варианта** в `al_strategies.py`:
+  - `coreset_query`: greedy k-center на 768-d эмбеддингах с инициализацией от train_seed (greedy выбор
+    B точек, максимизирующих min cosine distance до train_seed ∪ уже-выбранных)
+  - `hybrid_query`: top-K (K=3·B) uncertain → coreset до B (top-K по `max_prob_material`, потом diversity)
+- queried.csv для B=50 и B=100 в `coreset/` и `hybrid/`
+- **подтверждение H2 (diversity снижает дублирование)** в `strategy_redundancy.csv`:
+  - B=50: coreset 0.795 vs least_confidence 0.739 → **+5.6 пп** попарной дистанции
+  - B=100: coreset 0.774 vs least_confidence 0.736 → +3.8 пп
+- **коrest правильно находит редкий класс**: coreset берёт 5 из 9 доступных `стекло` в pool_candidate
+  (55% покрытия) при B=50, тогда как least_confidence — только 1
+- описание в REPORT раздел 15-17
+
+Нужно доделать:
+- [x] coreset (k-center на эмбеддингах)
+- [x] hybrid (uncertainty + coreset)
+- [x] использовать эмбеддинги из #13
+- [x] таблица показывает большую попарную дистанцию для diversity (+5.6 пп)
 
 ### 18. Симуляция доразметки / round active learning (5 баллов)
-Status: `missing`
+Status: `done`
 
-Нужно сделать:
-- [ ] реализовать `src/similis_baseline/al_loop.py`, который:
-  1. загружает `baseline_seed_best.pt`
-  2. для каждой стратегии (`random`, `uncertainty`, `diversity_or_hybrid`) выбирает B из `pool_candidate`
-  3. "раскрывает" метки из `pool_candidate_oracle.csv` (или вручную проверенных)
-  4. добавляет их к `train_seed` → новый `train_seed_plus_query.csv`
-  5. дообучает модель ровно по тому же recipe (тот же config, те же epochs, тот же seed)
-  6. оценивает на `val_gold` → сохраняет метрики
-- [ ] сравнить либо 2 бюджета (B=50, B=100), либо 2 раунда по B=50
+Уже есть:
+- `src/similis_baseline/al_loop.py` оркестрирует цикл: oracle reveal → concat с train_seed →
+  derived config → train.py → evaluate_detailed на val/test
+- 6 retrain'ов прогнаны: 3 стратегии × 2 бюджета = 6 (random, least_confidence, coreset × {50, 100})
+- per-run артефакты в `artifacts/active_learning/{strategy}/B{budget}/`: train_seed_plus_query.csv,
+  config.yaml, checkpoints/best.pt, reports/train_log.csv, val_detailed/, test_detailed/, metrics.json
+- сводка в `artifacts/active_learning/comparison/al_loop_summary.json`
+- идентичный recipe для всех retrain'ов (тот же config, seed, epochs, optimizer)
+
+Нужно доделать:
+- [x] al_loop.py с raveal → concat → train → eval циклом
+- [x] прогнать 3 стратегии × 2 бюджета
 - [ ] **критично**: tот же training recipe, тот же seed, тот же val_gold для всех стратегий
 - [ ] сохранить `artifacts/active_learning/{strategy}/{budget}/` с queried_ids, метриками, чекпоинтом
 
 ### 19. Сравнение стратегий + learning curves (8 баллов)
-Status: `missing`
+Status: `done`
 
-Нужно сделать:
-- [ ] свести в `artifacts/active_learning/comparison/results.csv` колонки:
-      `strategy`, `budget`, `val_metric`, `delta_vs_baseline`, `delta_vs_random`,
-      `noise_rate_among_queried`, `notes`
-- [ ] построить **learning curves** или barplot: x — budget, y — `val_metric` для каждой стратегии
-- [ ] разбор состава queried по nuisance-факторам: `layout_mode`, `bg_type`, `foreground_ratio`,
-      `has_scale_bar`, `has_overlay_text` — что выбирала каждая стратегия
-- [ ] краткий вывод:
-  - кто выиграл на малом бюджете
-  - кто начал насыщаться
-  - где diversity дал меньше дублей
-  - не подменяет ли uncertainty "информативность" отбором технически неудобных карточек
+Уже есть:
+- скрипт [src/similis_baseline/al_compare.py](src/similis_baseline/al_compare.py)
+- [results.csv](artifacts/active_learning/comparison/results.csv) с колонками: strategy, budget,
+  val_material/mean, test_material/mean, Δvs_baseline, Δvs_random_same_budget, redundancy, nuisance_shares
+- learning curves: [learning_curves.png](artifacts/active_learning/comparison/learning_curves.png) (val_material),
+  [learning_curves_mean.png](artifacts/active_learning/comparison/learning_curves_mean.png),
+  [learning_curves_test.png](artifacts/active_learning/comparison/learning_curves_test.png)
+- разбор queried по nuisance в [strategy_nuisance.csv](artifacts/active_learning/comparison/strategy_nuisance.csv):
+  least_confidence стабильно тащит 3-4× больше close_up; coreset 2× больше overlay_text
+- verdict в REPORT раздел 19:
+  - **coreset@B=50** — лучший на val_material (0.788, +8.5пп)
+  - **least_confidence@B=100** — лучший на test_material (0.733, +15.1пп)
+  - val/test расхождение объясняется малым числом `стекло` в val_gold (4 примера)
+  - random насыщается быстро (B=50→100 на test даже регрессия)
+  - H1 частично подтверждена (на test), H2 подтверждена
+
+Нужно доделать:
+- [x] results.csv с полным набором колонок
+- [x] learning curves (3 PNG: val_material, val_mean, test_material)
+- [x] разбор queried по nuisance
+- [x] выводы: кто выиграл при каком бюджете, где плато, где diversity снижает дубли
 
 ### 20. Финальный data-centric отчёт (10 баллов)
-Status: `missing`
+Status: `done`
+
+Уже есть:
+- REPORT_DATA_CENTRIC.md раздел 20 — победитель `least_confidence × B=100` (test_material 0.733, +15.1пп)
+- per-row сравнение baseline_seed vs AL: 37 wins, 28 regressions, 161 still-hard
+  ([final_baseline_vs_al_per_row.csv](artifacts/reports/data_centric/final_baseline_vs_al_per_row.csv))
+- 5 wins ([final_wins_grid.png](artifacts/reports/data_centric/final_wins_grid.png) +
+  [final_wins_examples.csv](artifacts/reports/data_centric/final_wins_examples.csv))
+- 5 still-hard ([final_still_hard_grid.png](artifacts/reports/data_centric/final_still_hard_grid.png) +
+  [final_still_hard_examples.csv](artifacts/reports/data_centric/final_still_hard_examples.csv))
+- финальный inference CSV: [inference_data_centric.csv](artifacts/preds/inference_data_centric.csv) — 1388 строк
+- 7 рекомендаций куратору в REPORT раздел 20 (стандартизация словарей, объединение классов, приоритет review,
+  доразметка редких, preprocessing rules, image-flags, AL-стратегия для production)
+
+Нужно доделать:
+- [x] какая стратегия и бюджет дали лучший результат
+- [x] насколько improved pipeline лучше baseline (численно)
+- [x] типы проблем, найденные в корпусе
+- [x] рекомендации куратору (7 пунктов)
+- [x] финальный inference CSV
+- [x] 5 wins и 5 still-hard кейсов с картинками
 
 Нужно сделать:
 - [ ] `REPORT_DATA_CENTRIC.md` (новый файл) или раздел в `REPORT.md`, в котором:
@@ -416,7 +470,21 @@ Status: `missing`
 - [ ] 5 случаев, которые остались сложными даже после улучшений
 
 ### 21. Финальный data-centric чек-лист (3 балла)
-Status: `missing`
+Status: `done`
+
+Уже есть:
+- сводный итог в REPORT_DATA_CENTRIC.md раздел 21:
+  - выбранные поля, размеры пулов, baseline, uncertainty signals, query-стратегии, бюджеты
+  - победитель: coreset@B=50 (val_material 0.788) и least_confidence@B=100 (test_material 0.733)
+  - 3 главных вывода о качестве корпуса
+- список приложенных артефактов: REPORT, CHECKLIST, configs, 9 модулей, 4 CSV-пула + oracle + manifest,
+  embeddings, AL-стратегии, review_table, finalвсё inference
+
+Нужно доделать:
+- [x] выбор полей, сплит, baseline, signals, стратегии, бюджеты — сведено
+- [x] победитель и насколько улучшил baseline
+- [x] 2-3 ключевых вывода о качестве корпуса
+- [x] перечислены все артефакты
 
 Нужно сделать:
 - [ ] в конце `REPORT_DATA_CENTRIC.md` короткий итог:

@@ -1,0 +1,65 @@
+seed: 42
+backbone: convnext_tiny
+pretrained: true
+image_size: 384
+batch_size: 16
+num_workers: 0
+epochs: 9
+freeze_backbone_epochs: 2
+lr: 0.0003
+backbone_lr: 3.0e-05
+weight_decay: 0.0001
+max_grad_norm: 1.0
+min_lr: 1.0e-06
+lr_schedule: cosine
+preprocess_mode: pad
+use_class_weights: true
+fields:
+- type
+- part
+- integrity
+- material
+loss_weights:
+  type: 0.35
+  part: 0.25
+  integrity: 0.2
+  material: 0.2
+confidence_thresholds:
+  type: 0.45
+  part: 0.5
+  integrity: 0.55
+  material: 0.5
+primary_field: material
+full_manifest_path: data/processed/full_manifest.csv
+matched_manifest_path: data/processed/matched_manifest.csv
+label_maps_path: data/processed/label_maps.json
+images_dir: data/raw/images
+test_open_csv: data/processed/test_open.csv
+val_gold_size: 150
+train_seed_size: 350
+data_centric_dir: data/processed/data_centric
+train_seed_csv: data/processed/data_centric/train_seed.csv
+val_gold_csv: data/processed/data_centric/val_gold.csv
+test_gold_csv: data/processed/data_centric/test_gold.csv
+pool_candidate_csv: data/processed/data_centric/pool_candidate.csv
+pool_candidate_oracle_csv: data/processed/data_centric/pool_candidate_oracle.csv
+manifest_data_centric_csv: data/processed/data_centric/manifest_data_centric.csv
+train_csv: artifacts/active_learning/random/B100/train_seed_plus_query.csv
+val_csv: data/processed/data_centric/val_gold.csv
+test_csv: data/processed/data_centric/test_gold.csv
+active_learning:
+  budgets:
+  - 50
+  - 100
+  rounds: 1
+  strategies:
+  - random
+  - uncertainty_least_confidence
+  - diversity_coreset
+checkpoint_dir: artifacts/active_learning/random/B100/checkpoints
+preds_dir: artifacts/active_learning/random/B100/preds
+reports_dir: artifacts/active_learning/random/B100/reports
+figures_dir: artifacts/active_learning/random/B100/figures
+review_dir: artifacts/review
+embeddings_dir: artifacts/embeddings
+active_learning_dir: artifacts/active_learning

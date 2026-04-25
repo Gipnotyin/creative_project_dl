@@ -1,0 +1,5 @@
+strategy,random,least_confidence,coreset,hybrid
+random,50,5,5,4
+least_confidence,5,50,11,20
+coreset,5,11,50,26
+hybrid,4,20,26,50

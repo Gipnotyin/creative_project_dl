@@ -1,0 +1,6 @@
+image_file,group_key,gt_type,gt_part,gt_integrity,gt_material,baseline_pred_type,baseline_pred_part,baseline_pred_integrity,baseline_pred_material,al_pred_type,al_pred_part,al_pred_integrity,al_pred_material,baseline_correct_type,baseline_correct_part,baseline_correct_integrity,baseline_correct_material,al_correct_type,al_correct_part,al_correct_integrity,al_correct_material,wins_count,regressions_count,both_wrong_count
+data/raw/images/Нц-102-1523_orig.jpg,Нц-102-1523,__MISSING__,__MISSING__,фрагмент,__MISSING__,тарелка,венчик,фрагмент,керамика,изразец,венчик,фрагмент,керамика,0,0,1,0,0,0,1,0,0,0,3
+data/raw/images/БП12-Г01-6540_orig.jpg,БП12-Г01-6540,тарелка,__MISSING__,фрагмент,фаянс,блюдце,донце,фрагмент,фарфор,блюдце,профиль,фрагмент,фарфор,0,0,1,0,0,0,1,0,0,0,3
+data/raw/images/Нц-46-150_orig.jpg,Нц-46-150,крышка,ручка,фрагмент,фаянс,крышка,профиль,целый,фарфор,крышка,профиль,целый,фарфор,1,0,0,0,1,0,0,0,0,0,3
+data/raw/images/Нейш3А-2018-4945_orig.jpg,Нейш3А-2018-4945,блюдце,__MISSING__,целый,фарфор,тарелка,профиль,фрагмент,фаянс,тарелка,профиль,фрагмент,фарфор,0,0,0,0,0,0,0,1,1,0,3
+data/raw/images/БП12-Г01-5772_orig.jpg,БП12-Г01-5772,крышка,__MISSING__,фрагмент,керамика,тарелка,профиль,фрагмент,фаянс,тарелка,профиль,фрагмент,фаянс,0,0,1,0,0,0,1,0,0,0,3

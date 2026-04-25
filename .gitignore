@@ -25,3 +25,6 @@ artifacts/ablations/no_class_weights/checkpoints/
 artifacts/ablations/stretch/checkpoints/
 artifacts/reports/retrain_stdout.log
 artifacts/reports/data_centric/train_seed_stdout.log
+artifacts/active_learning/al_loop_stdout.log
+artifacts/active_learning/*/B*/checkpoints/
+artifacts/active_learning/*/B*/train_stdout.log

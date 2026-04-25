@@ -1,0 +1,6 @@
+image_file,group_key,gt_type,gt_part,gt_integrity,gt_material,baseline_pred_type,baseline_pred_part,baseline_pred_integrity,baseline_pred_material,al_pred_type,al_pred_part,al_pred_integrity,al_pred_material,baseline_correct_type,baseline_correct_part,baseline_correct_integrity,baseline_correct_material,al_correct_type,al_correct_part,al_correct_integrity,al_correct_material,wins_count,regressions_count,both_wrong_count
+data/raw/images/Нейш3А-2018-0871_orig.jpg,Нейш3А-2018-0871,блюдце,профиль,фрагмент,фарфор,тарелка,венчик,фрагмент,фарфор,блюдце,профиль,фрагмент,фарфор,0,0,1,1,1,1,1,1,2,0,0
+data/raw/images/Нейш3А-2018-4499_orig.jpg,Нейш3А-2018-4499,крышка,__MISSING__,целый,стекло,блюдце,донце,целый,фаянс,крышка,прочее,целый,стекло,0,0,1,0,1,0,1,1,2,0,1
+data/raw/images/ВО-1л58-2017-0575_orig.jpg,ВО-1л58-2017-0575,блюдце,венчик,фрагмент,фарфор,тарелка,профиль,фрагмент,фаянс,тарелка,венчик,фрагмент,фарфор,0,0,1,0,0,1,1,1,2,0,1
+data/raw/images/М102-2012-1-0827_orig.jpg,М102-2012-1-0827,тарелка,__MISSING__,фрагмент,фаянс,тарелка,донце,фрагмент,фарфор,тарелка,венчик,фрагмент,фаянс,1,0,1,0,1,0,1,1,1,0,1
+data/raw/images/М102-2012-2-1271_orig.jpg,М102-2012-2-1271,блюдце,__MISSING__,фрагмент,фарфор,тарелка,профиль,фрагмент,фарфор,блюдце,профиль,фрагмент,фарфор,0,0,1,1,1,0,1,1,1,0,1
