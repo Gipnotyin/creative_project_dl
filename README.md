@@ -534,15 +534,29 @@ python -m src.similis_baseline.ablation_report \
 
 ## Веса модели
 
-`artifacts/checkpoints/best.pt` (~334 MB) и `last.pt` не включены в git из-за лимита GitLab на размер файлов. Скачать
-веса для воспроизведения инференса и `evaluate_detailed`:
+`artifacts/checkpoints/best.pt` (~334 MB) и `last.pt` не включены в git из-за лимита GitHub на размер файлов.
+Скачать всю папку `checkpoints/` с Yandex Disk:
 
-- best.pt: `<TODO: добавить ссылку после загрузки на Yandex Disk / Google Drive>`
-- last.pt: `<TODO: optional>`
+**https://disk.yandex.ru/d/s_DG-gyUyLocCQ**
 
-После скачивания положить в `artifacts/checkpoints/best.pt`. Контрольная сумма и параметры checkpoint сохранены в
+После скачивания положить файлы в `artifacts/checkpoints/`, чтобы получилось:
+
+```
+artifacts/checkpoints/best.pt
+artifacts/checkpoints/last.pt
+```
+
+Параметры и проверка checkpoint сохранены в
 [artifacts/reports/model_summary.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/model_summary.json)
-и [artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json).
+(total params, backbone, fields, epoch, best_metric) и
+[artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json)
+(`reload checkpoint -> same logits` round-trip test). После скачивания можно проверить целостность:
+
+```bash
+python scripts/regen_checkpoint_artifacts.py
+```
+
+Скрипт перезапишет оба JSON-файла и покажет, что параметры совпадают с теми, что приведены в репо.
 
 ## Ограничения
 
