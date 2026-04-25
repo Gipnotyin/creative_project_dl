@@ -534,23 +534,42 @@ python -m src.similis_baseline.ablation_report \
 
 ## Веса модели
 
-`artifacts/checkpoints/best.pt` (~334 MB) и `last.pt` не включены в git из-за лимита GitHub на размер файлов.
-Скачать всю папку `checkpoints/` с Yandex Disk:
+Тяжёлые checkpoint'ы не включены в git из-за лимита GitHub на размер файлов. Доступны на Yandex Disk:
+
+### 1. Baseline (трек 1.1)
+
+`artifacts/checkpoints/best.pt` (~334 MB) и `last.pt` — финальный baseline (`convnext_tiny @384`,
+test mean_macro_f1 = 0.702):
 
 **https://disk.yandex.ru/d/s_DG-gyUyLocCQ**
 
-После скачивания положить файлы в `artifacts/checkpoints/`, чтобы получилось:
+После скачивания положить файлы в `artifacts/checkpoints/`:
 
 ```
 artifacts/checkpoints/best.pt
 artifacts/checkpoints/last.pt
 ```
 
-Параметры и проверка checkpoint сохранены в
-[artifacts/reports/model_summary.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/model_summary.json)
-(total params, backbone, fields, epoch, best_metric) и
-[artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json)
-(`reload checkpoint -> same logits` round-trip test). После скачивания можно проверить целостность:
+### 2. Data-centric AL — best AL-чекпоинт (трек 1.2)
+
+`artifacts/active_learning/least_confidence/B100/checkpoints/best.pt` (~640 MB) — победитель AL-симуляции,
+лучший на test_material_macro_f1 = 0.733 (+0.151 vs baseline_seed). Использован для генерации финального
+`artifacts/preds/inference_data_centric.csv`:
+
+**https://disk.yandex.ru/d/N2JrADnzMFJleg**
+
+После скачивания положить файл в `artifacts/active_learning/least_confidence/B100/checkpoints/best.pt`.
+
+### Проверка целостности
+
+Параметры и round-trip test сохранены в JSON-артефактах:
+
+- baseline: [model_summary.json](artifacts/reports/model_summary.json) +
+  [checkpoint_roundtrip.json](artifacts/reports/checkpoint_roundtrip.json)
+- baseline_seed (data-centric стартовый): [baseline_seed_model_summary.json](artifacts/reports/data_centric/baseline_seed_model_summary.json) +
+  [baseline_seed_checkpoint_roundtrip.json](artifacts/reports/data_centric/baseline_seed_checkpoint_roundtrip.json)
+
+После скачивания baseline можно проверить:
 
 ```bash
 python scripts/regen_checkpoint_artifacts.py
