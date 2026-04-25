@@ -4,13 +4,23 @@ __pycache__/
 .env
 venv/
 .venv/
-artifacts/checkpoints/*.pt
-artifacts/preds/*.csv
-artifacts/reports/*.json
-artifacts/reports/*.csv
+.venv-mps/
 data/raw/*
-IMPLEMENTATION_CHECKLIST.md
 TASK_CHECKLIST.md
 task.txt
 .DS_Store
 .idea
+splits/*
+.claude
+
+# Reference / external task description copy
+Творческое задание/
+
+# Heavy training artifacts — uploaded separately, see README "Веса модели"
+artifacts/checkpoints/
+artifacts/archive_pre_clean_retrain/
+artifacts/archive_pre_final_retrain/
+artifacts/ablations/base/checkpoints/
+artifacts/ablations/no_class_weights/checkpoints/
+artifacts/ablations/stretch/checkpoints/
+artifacts/reports/retrain_stdout.log

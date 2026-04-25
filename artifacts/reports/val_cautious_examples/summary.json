@@ -1,0 +1,15 @@
+{
+  "rows": 18,
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "thresholds": {
+    "type": 0.45,
+    "part": 0.5,
+    "integrity": 0.55,
+    "material": 0.5
+  }
+}

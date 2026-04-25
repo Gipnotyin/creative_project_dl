@@ -1,0 +1,16 @@
+{
+  "split_name": "val",
+  "rows": 208,
+  "any_error_rate": 0.34615384615384615,
+  "auto_description_match_rate": 0.2932692307692308,
+  "layout_modes": {
+    "single_object": 0.7788461538461539,
+    "multi_view": 0.18269230769230768,
+    "close_up": 0.038461538461538464
+  },
+  "bg_types": {
+    "white_uniform": 0.7019230769230769,
+    "light_photo": 0.2692307692307692,
+    "dark_or_complex": 0.028846153846153848
+  }
+}

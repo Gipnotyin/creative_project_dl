@@ -1,0 +1,8 @@
+error_reason,rows,any_error_rate,auto_description_match_rate,mean_num_field_errors,mean_confidence
+correct,118,0.0,0.576271186440678,0.0,0.907065593220339
+other_model_error,53,1.0,0.0,1.2075471698113207,0.8765113018867924
+layout_complexity,18,1.0,0.0,1.0555555555555556,0.8734977777777778
+visual_ambiguity_low_confidence,11,1.0,0.0,1.5454545454545454,0.7170898181818182
+uncertain_or_label_noise,6,1.0,0.0,1.5,0.8288961666666667
+hard_visual_conditions,2,1.0,0.0,1.0,0.9064235
+shortcut_risk_layout,1,1.0,0.0,2.0,0.768289

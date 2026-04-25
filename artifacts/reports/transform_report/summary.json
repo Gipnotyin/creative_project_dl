@@ -1,0 +1,7 @@
+{
+  "image_path": "data/raw/images/М102-2012-1-0494_orig.jpg",
+  "image_size": 384,
+  "current_preprocess_mode": "pad",
+  "compare_preprocess_mode": "stretch",
+  "train_variants": 3
+}

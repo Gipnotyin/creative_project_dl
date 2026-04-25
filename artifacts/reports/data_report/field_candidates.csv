@@ -1,0 +1,8 @@
+candidate_field,visible_from_image,target_type,num_classes,missing_ratio,ambiguity_risk,baseline_decision,comment
+type,yes,categorical,6,0.023071377072819033,medium,selected,core object category
+part,partial,categorical,6,0.4953136265320836,high,selected,"useful, but noisy and often missing"
+integrity,yes,categorical,2,0.0,low,selected,strong visual cue
+material,partial,categorical,5,0.020187454938716654,medium,selected,"visible, but sometimes probabilistic"
+size,no,free_text,871,0.13049747656813265,high,excluded,requires external scale or card metadata
+cultlayer,no,categorical,245,0.07786589762076424,high,excluded,"context field, not an image attribute"
+survyear,no,categorical,6,0.6171593366979091,high,excluded,"excavation metadata, not visual content"

@@ -1,0 +1,14 @@
+feature,value,count,ratio
+layout_mode,single_object,1047,0.7548666186012978
+layout_mode,multi_view,302,0.21773612112472962
+layout_mode,close_up,38,0.0273972602739726
+bg_type,white_uniform,1036,0.7469358327325162
+bg_type,light_photo,322,0.23215573179524152
+bg_type,dark_or_complex,29,0.02090843547224225
+has_scale_bar,0,1386,0.9992790194664743
+has_scale_bar,1,1,0.0007209805335255948
+has_overlay_text,0,1251,0.9019466474405191
+has_overlay_text,1,136,0.09805335255948089
+foreground_ratio_bin,ge_0.30,883,0.6366258111031002
+foreground_ratio_bin,0.15_0.30,492,0.3547224224945926
+foreground_ratio_bin,0.08_0.15,12,0.008651766402307137

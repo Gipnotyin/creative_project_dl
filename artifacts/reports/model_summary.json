@@ -1,0 +1,17 @@
+{
+  "checkpoint_path": "artifacts/checkpoints/best.pt",
+  "backbone": "convnext_tiny",
+  "image_size": 384,
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "epoch": 7,
+  "best_metric": 0.8190997315494435,
+  "total_params": 27834739,
+  "backbone_params": 27820128,
+  "heads_params": 14611,
+  "trainable_params": 27834739
+}

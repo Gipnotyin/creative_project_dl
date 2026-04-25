@@ -1,0 +1,16 @@
+{
+  "split_name": "test",
+  "rows": 209,
+  "any_error_rate": 0.4354066985645933,
+  "auto_description_match_rate": 0.3253588516746411,
+  "layout_modes": {
+    "single_object": 0.7368421052631579,
+    "multi_view": 0.23923444976076555,
+    "close_up": 0.023923444976076555
+  },
+  "bg_types": {
+    "white_uniform": 0.7511961722488039,
+    "light_photo": 0.23444976076555024,
+    "dark_or_complex": 0.014354066985645933
+  }
+}

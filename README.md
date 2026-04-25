@@ -39,7 +39,7 @@
 
 ## Данные и split
 
-Сплит делается не по строкам, а по `group_key`, чтобы не разрывать близкие кадры одного артефакта между train/val/test.
+Сплит делается через `GroupShuffleSplit` по `group_key`, чтобы при появлении повторов одного артефакта они не разъезжались между train/val/test.
 
 Текущее соответствие:
 
@@ -53,17 +53,21 @@
 - `val_inner`: `208`
 - `test_open`: `209`
 
-Текущий `group_key` строится как proxy по `code`, а не по настоящему `artifact_id`. Это рабочий baseline-вариант, но не
-идеальный идентификатор.
+В этом открытом корпусе **повторов одного и того же артефакта нет**: все 1387 строк имеют уникальный `code`, и никакая
+комбинация других колонок (`name`, `description`, `cultlayer+execorg+survyear`) не даёт реальных артефакт-уровневых
+повторов — совпадения в `description` оказываются разными находками с одинаковой обобщённой формулировкой
+(например, "Тарелки фаянсовой профиль" встречается у 11 разных артефактов из разных раскопок).
 
-Важно:
+Поэтому `group_key=code` фактически эквивалентен row-level split: leakage по повторам невозможен, потому что повторов
+нет. Это ограничение **самих данных**, а не split-логики. Когда в корпус попадут предметы с настоящим `artifact_id`,
+group-aware pipeline сработает без изменений в коде.
 
-- повторный `data_prep` с тем же `seed` воспроизводит те же split’ы;
-- в `splits/` теперь лежат и alias-файлы `train_inner.csv`, `val_inner.csv`, `test_open.csv`;
-- но у текущего proxy `group_key` почти нет повторов: в
-  [artifacts/reports/data_report/report.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/report.json)
-  `repeated_group_key_count = 0`. Это значит, что leakage-check формально проходит, но сила group-aware split в этой
-  версии ограничена самим proxy-ключом.
+Воспроизводимость:
+
+- повторный `data_prep` с тем же `seed=42` даёт те же split’ы;
+- проверка пересечения групп в `artifacts/reports/data_report/report.json`: `train ∩ val = 0`, `train ∩ test = 0`,
+  `val ∩ test = 0`, `repeated_group_key_count = 0`;
+- в `splits/` лежат alias-файлы `train_inner.csv`, `val_inner.csv`, `test_open.csv`.
 
 ## Модель и обучение
 
@@ -92,40 +96,41 @@
 
 Текущий основной checkpoint:
 
-- [artifacts/checkpoints/best.pt](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/checkpoints/best.pt)
+- `artifacts/checkpoints/best.pt` (~334 MB, ConvNeXt-Tiny @384). Файл не хранится в git из-за размера; ссылка на скачивание — см. ниже секцию **Веса модели**.
 
-Он выбран по `val mean_macro_f1` и соответствует `epoch=8` из train-конфига с `image_size=384`.
-
-Текущая подтверждённая detailed-оценка этого checkpoint:
+Он получен из чистого 9-эпохного retrain на `configs/baseline.yaml` (image_size=384, ConvNeXt-Tiny, MPS); выбран по
+`val mean_macro_f1` и соответствует `epoch=7`. Полный лог обучения лежит в
+[artifacts/reports/train_log.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log.csv)
+и **синхронизирован с этим checkpoint** (предыдущий рассинхронизированный лог сохранён в
+`artifacts/archive_pre_clean_retrain/`).
 
 Валидация:
 
-- `mean_macro_f1 = 0.8396`
-- `type_macro_f1 = 0.8559`
-- `part_macro_f1 = 0.8159`
-- `integrity_macro_f1 = 0.7600`
-- `material_macro_f1 = 0.9265`
+- `mean_macro_f1 = 0.8191`
+- `type_macro_f1 = 0.8419`
+- `part_macro_f1 = 0.7710`
+- `integrity_macro_f1 = 0.7518`
+- `material_macro_f1 = 0.9117`
 
 Источник:
 [artifacts/reports/val_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_detailed/metrics.json)
 
 Открытый тест:
 
-- `mean_macro_f1 = 0.7181`
-- `type_macro_f1 = 0.7665`
-- `part_macro_f1 = 0.5728`
-- `integrity_macro_f1 = 0.7235`
-- `material_macro_f1 = 0.8097`
+- `mean_macro_f1 = 0.7023`
+- `type_macro_f1 = 0.7556`
+- `part_macro_f1 = 0.5890`
+- `integrity_macro_f1 = 0.6240`
+- `material_macro_f1 = 0.8404`
 
 Источник:
 [artifacts/reports/test_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_detailed/metrics.json)
 
-Важно:
+Графики train_log:
 
-- [artifacts/reports/train_log.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log.csv)
-  сейчас не надо считать source of truth для этого `best.pt`, потому что этот лог относится к более поздней частично
-  прерванной попытке retrain.
-- Для текущего лучшего checkpoint ориентироваться нужно на `best.pt` + `val_detailed/test_detailed`.
+- [artifacts/reports/train_log_report/loss_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/loss_curve.png)
+- [artifacts/reports/train_log_report/macro_f1_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/macro_f1_curve.png)
+- [artifacts/reports/train_log_report/lr_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/lr_curve.png)
 
 ## Ablation Study
 
@@ -234,11 +239,17 @@ similis_baseline_project/
 │   ├── tiny_overfit.py
 │   ├── data_report.py
 │   ├── transform_report.py
+│   ├── safe_crop_demo.py
 │   ├── error_factor_report.py
 │   ├── train_log_report.py
 │   ├── cautious_examples.py
 │   ├── image_analysis.py
 │   └── ablation_report.py
+├── scripts/
+│   ├── build_baseline_notebook.py
+│   ├── post_retrain.sh
+│   └── regen_checkpoint_artifacts.py
+├── baseline_report.ipynb
 ├── requirements.txt
 ├── README.md
 └── REPORT.md
@@ -521,20 +532,30 @@ python -m src.similis_baseline.ablation_report \
   --output-dir artifacts/ablations/report
 ```
 
+## Веса модели
+
+`artifacts/checkpoints/best.pt` (~334 MB) и `last.pt` не включены в git из-за лимита GitLab на размер файлов. Скачать
+веса для воспроизведения инференса и `evaluate_detailed`:
+
+- best.pt: `<TODO: добавить ссылку после загрузки на Yandex Disk / Google Drive>`
+- last.pt: `<TODO: optional>`
+
+После скачивания положить в `artifacts/checkpoints/best.pt`. Контрольная сумма и параметры checkpoint сохранены в
+[artifacts/reports/model_summary.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/model_summary.json)
+и [artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json).
+
 ## Ограничения
 
-- `group_key` сейчас proxy по `code`, а не настоящий `artifact_id`
-- у текущего proxy почти нет повторов, поэтому group-aware split формально воспроизводим, но не даёт сильной защиты от
-  artifact-level leakage
+- в открытом корпусе нет повторов одного артефакта, поэтому group-aware split фактически совпадает с row-level split
+  (это ограничение данных, не pipeline)
 - нормализация словарей rule-based и чувствительна к шуму разметки
-- `part` остаётся самым шумным полем
+- `part` остаётся самым шумным полем (visual + label noise)
 - baseline не пытается генерировать свободный текст и не предсказывает интерпретационные поля
 - preprocessing-вывод по `stretch` пока нельзя считать окончательным: на коротком CPU-study он выиграл `val`, но проиграл
   `test_open`
 
 ## Что ещё стоит сделать
 
-- довести финальный retrain-log так, чтобы он однозначно соответствовал текущему `best.pt`
-- при необходимости заменить proxy `group_key` на более сильный artifact-level идентификатор
+- при появлении данных с настоящим `artifact_id` подключить его в `data_prep` без изменений в split-логике
 - вручную проверить качество heuristic-разметки `layout_mode/bg_type/overlay_text` на небольшой подвыборке
-- при желании прогнать полноценный retrain уже после выбора окончательной preprocessing-политики
+- довести интегрированную data-centric часть (трек 1.2) — отдельная работа, не входит в baseline

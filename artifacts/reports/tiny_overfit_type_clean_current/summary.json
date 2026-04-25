@@ -1,0 +1,46 @@
+{
+  "subset_size": 10,
+  "epochs": 12,
+  "batch_size": 2,
+  "steps_per_epoch": 5,
+  "total_optimizer_steps": 60,
+  "image_size": 224,
+  "fields": [
+    "type"
+  ],
+  "balance_by": "type",
+  "train_aug_enabled": false,
+  "class_weights_source": "subset",
+  "exclude_uncertain": true,
+  "require_complete_labels": true,
+  "exclude_part_labels": [],
+  "candidate_pool": {
+    "rows_before_filters": 970,
+    "excluded_uncertain_rows": 45,
+    "excluded_missing_label_rows": 18,
+    "excluded_part_label_rows": 0,
+    "rows_after_filters": 907
+  },
+  "checkpoint": "artifacts/checkpoints/best.pt",
+  "scheduler": "none",
+  "freeze_backbone": true,
+  "reset_heads": true,
+  "trainable_parameters": 4614,
+  "start_train_loss": 3.036251974105835,
+  "end_train_loss": 0.0,
+  "start_subset_loss": 0.00949566229606944,
+  "end_subset_loss": 0.0,
+  "best_mean_macro_f1": 1.0,
+  "final_metrics": {
+    "epoch": 12.0,
+    "train_loss": 0.0,
+    "subset_loss": 0.0,
+    "type_subset_loss": 0.0,
+    "type_acc": 1.0,
+    "type_macro_f1": 1.0,
+    "mean_macro_f1": 1.0,
+    "lr": 0.01
+  },
+  "prediction_rows": 10,
+  "overfit_success": true
+}

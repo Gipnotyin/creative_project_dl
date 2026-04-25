@@ -1,0 +1,4 @@
+experiment,config_path,backbone,image_size,epochs,freeze_backbone_epochs,preprocess_mode,use_class_weights,best_epoch,logged_best_val_mean_macro_f1,val_mean_macro_f1,val_type_macro_f1,val_part_macro_f1,val_integrity_macro_f1,val_material_macro_f1,test_mean_macro_f1
+ablation_cpu_stretch,configs/ablation_cpu_stretch.yaml,convnext_tiny,224,4,1,stretch,True,4,0.7675847661847075,0.7675847661847075,0.7814543110421939,0.7196452417546423,0.6936671575846833,0.8755723543573108,0.6711895079535172
+ablation_cpu_no_class_weights,configs/ablation_cpu_no_class_weights.yaml,convnext_tiny,224,4,1,pad,False,4,0.7331463644290074,0.7331463644290074,0.7780387916854627,0.5835964177565879,0.7898989898989899,0.7810512583749891,0.6162795945066997
+ablation_cpu_base,configs/ablation_cpu_base.yaml,convnext_tiny,224,4,1,pad,True,4,0.7020507670036535,0.7020507670036535,0.7467674505976428,0.631556350626118,0.712607944732297,0.7172713220585561,0.7010286809422209

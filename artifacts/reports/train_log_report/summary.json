@@ -1,0 +1,37 @@
+{
+  "rows": 9,
+  "columns": [
+    "epoch",
+    "train_loss",
+    "val_loss",
+    "type_acc",
+    "type_macro_f1",
+    "part_acc",
+    "part_macro_f1",
+    "integrity_acc",
+    "integrity_macro_f1",
+    "material_acc",
+    "material_macro_f1",
+    "mean_macro_f1",
+    "backbone_trainable",
+    "backbone_lr",
+    "head_lr"
+  ],
+  "best_row": {
+    "epoch": 7.0,
+    "train_loss": 0.0186414978940223,
+    "val_loss": 0.3052355910723026,
+    "type_acc": 0.8484848484848485,
+    "type_macro_f1": 0.8418573681622353,
+    "part_acc": 0.7452830188679245,
+    "part_macro_f1": 0.7710151802656546,
+    "integrity_acc": 0.9567307692307692,
+    "integrity_macro_f1": 0.7518228821423836,
+    "material_acc": 0.8960396039603961,
+    "material_macro_f1": 0.9117034956275,
+    "mean_macro_f1": 0.8190997315494435,
+    "backbone_trainable": 1.0,
+    "backbone_lr": 8.250000000000004e-06,
+    "head_lr": 4.478753621261114e-05
+  }
+}

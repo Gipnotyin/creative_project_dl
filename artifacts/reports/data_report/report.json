@@ -1,0 +1,46 @@
+{
+  "manifest_path": "data/processed/full_manifest.csv",
+  "images_dir": "data/raw/images",
+  "full_rows": 1387,
+  "rows_with_images": 1387,
+  "images_found_on_disk": 1388,
+  "broken_path_count": 0,
+  "duplicate_image_file_count": 0,
+  "repeated_group_key_count": 0,
+  "uncertain_row_count": 68,
+  "split_rows": {
+    "train": 970,
+    "val": 208,
+    "test": 209
+  },
+  "group_overlap": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "split_reproducible_from_seed": true,
+  "layout_mode_distribution": {
+    "single_object": 0.7548666186012978,
+    "multi_view": 0.21773612112472962,
+    "close_up": 0.0273972602739726
+  },
+  "bg_type_distribution": {
+    "white_uniform": 0.7469358327325162,
+    "light_photo": 0.23215573179524152,
+    "dark_or_complex": 0.02090843547224225
+  },
+  "foreground_ratio": {
+    "median": 0.33158602150537636,
+    "p10": 0.22284801876955163,
+    "p90": 0.4650815217391305
+  },
+  "scale_bar_ratio": 0.0007209805335255948,
+  "overlay_text_ratio": 0.09805335255948089,
+  "intact_group_examples": [],
+  "corpus_difficulty_summary": [
+    "multi_view ratio: 0.218",
+    "close_up ratio: 0.027",
+    "scale_bar ratio: 0.001",
+    "overlay_text ratio: 0.098"
+  ]
+}

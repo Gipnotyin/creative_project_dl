@@ -50,8 +50,13 @@ Split делается group-aware по `group_key`.
 - val: `208`
 - test_open: `209`
 
-Текущий `group_key` построен как proxy по `code`. Это сильнее, чем row-wise split, но слабее настоящего
-`artifact_id`.
+`group_key` построен как `code`. В этом открытом корпусе **повторов одного и того же артефакта нет**: все 1387 строк
+имеют уникальный `code`, и никакая комбинация других колонок (`name`, `description`, `cultlayer+execorg+survyear`) не
+даёт реальных артефакт-уровневых повторов — совпадения в `description` оказываются разными находками с одинаковой
+обобщённой формулировкой ("Тарелки фаянсовой профиль" встречается у 11 разных артефактов из разных раскопок).
+Поэтому `group_key=code` фактически эквивалентен row-level split: leakage по повторам невозможен, потому что повторов
+нет. Это ограничение **самих данных**, а не split-логики; при появлении данных с настоящим `artifact_id` group-aware
+pipeline сработает без изменений.
 
 Проверки по текущему split:
 
@@ -60,15 +65,10 @@ Split делается group-aware по `group_key`.
 - `train ∩ val = 0`
 - `train ∩ test = 0`
 - `val ∩ test = 0`
+- `repeated_group_key_count = 0` (ожидаемо для этого корпуса, см. выше)
 
 Источник:
 [artifacts/reports/data_report/report.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/data_report/report.json)
-
-Важная оговорка:
-
-- у текущего proxy `group_key` нет повторов между строками, `repeated_group_key_count = 0`;
-- поэтому split воспроизводим и формально leakage-free, но “неразорванных групп” в артефактах показать нельзя;
-- это ограничение именно текущего proxy-ключа, а не самого `GroupShuffleSplit`.
 
 Дополнительные проверки воспроизводимости:
 
@@ -210,13 +210,28 @@ Mandatory vs optional в шаблоне:
 
 - [artifacts/reports/checkpoint_roundtrip.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/checkpoint_roundtrip.json)
 
-Отдельный короткий train-log report:
+Полный синхронизированный train_log + графики:
 
-- [artifacts/ablations/base/reports/train_log_report/lr_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/ablations/base/reports/train_log_report/lr_curve.png)
-- [artifacts/ablations/base/reports/train_log_report/loss_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/ablations/base/reports/train_log_report/loss_curve.png)
+- [artifacts/reports/train_log.csv](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log.csv)
+- [artifacts/reports/train_log_report/loss_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/loss_curve.png)
+- [artifacts/reports/train_log_report/macro_f1_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/macro_f1_curve.png)
+- [artifacts/reports/train_log_report/lr_curve.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/train_log_report/lr_curve.png)
 
-Он нужен не как финальный baseline-log, а как воспроизводимый пример полного train/eval цикла с LR-графиком и
-заморозкой/разморозкой backbone.
+### Решение по числу эпох
+
+В `configs/baseline.yaml` зафиксировано `epochs=9` с `freeze_backbone_epochs=2`. Логика выбора подтверждается кривыми
+из `train_log.csv`:
+
+- эпохи 1-2 (backbone заморожен): mean_macro_f1 растёт 0.600 → 0.661 за счёт обучения голов;
+- эпохи 3-4 (backbone разморожен): резкий рост до 0.760, train_loss падает с 0.46 до 0.25;
+- эпохи 5-7: продолжающийся рост с локальным максимумом **0.819 на эпохе 7**;
+- эпохи 8-9: train_loss продолжает падать (0.009 → 0.006), но val_loss стабилизируется и даже растёт (0.30 → 0.32),
+  а mean_macro_f1 слегка снижается до 0.811-0.816 — признак раннего overfitting.
+
+Дальше увеличивать число эпох без дополнительной регуляризации смысла нет: `best.pt` уже взят с эпохи 7, последующие
+эпохи нужны только как контроль того, что метрика не обнаружит более позднего пика. Решение зафиксировать `epochs=9`
+именно по этой причине: достаточно короткий бюджет, чтобы покрыть пик и наблюдать ранний overfit, но без затрат на
+эпохи, где val ухудшается.
 
 ## 7. Основные метрики
 
@@ -225,22 +240,22 @@ Mandatory vs optional в шаблоне:
 Источник:
 [artifacts/reports/val_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/val_detailed/metrics.json)
 
-- `mean_macro_f1 = 0.8396`
-- `type_macro_f1 = 0.8559`
-- `part_macro_f1 = 0.8159`
-- `integrity_macro_f1 = 0.7600`
-- `material_macro_f1 = 0.9265`
+- `mean_macro_f1 = 0.8191`
+- `type_macro_f1 = 0.8419`
+- `part_macro_f1 = 0.7710`
+- `integrity_macro_f1 = 0.7518`
+- `material_macro_f1 = 0.9117`
 
 ### Открытый тест
 
 Источник:
 [artifacts/reports/test_detailed/metrics.json](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/test_detailed/metrics.json)
 
-- `mean_macro_f1 = 0.7181`
-- `type_macro_f1 = 0.7665`
-- `part_macro_f1 = 0.5728`
-- `integrity_macro_f1 = 0.7235`
-- `material_macro_f1 = 0.8097`
+- `mean_macro_f1 = 0.7023`
+- `type_macro_f1 = 0.7556`
+- `part_macro_f1 = 0.5890`
+- `integrity_macro_f1 = 0.6240`
+- `material_macro_f1 = 0.8404`
 
 Дополнительные артефакты по ошибкам:
 
@@ -319,13 +334,17 @@ Mandatory vs optional в шаблоне:
 
 Дополнительная проверка аугментаций и transform-политики:
 
-- [artifacts/reports/transform_report/transform_examples.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/transform_report/transform_examples.png)
+- [artifacts/reports/transform_report/transform_examples.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/transform_report/transform_examples.png) — train aug + eval pad vs stretch
+- [artifacts/reports/transform_report/safe_crop_vs_pad.png](/Users/gipnotyin/Downloads/similis_baseline_project/artifacts/reports/transform_report/safe_crop_vs_pad.png) — pad vs safe content-aware crop vs aggressive center-crop (anti-pattern)
+
+Скрипты: `transform_report.py`, `safe_crop_demo.py`.
 
 Это не полноценная ablation сама по себе, но она показывает:
 
 - train augmentation действительно меняет одну и ту же картинку;
 - eval transform остаётся детерминированным;
-- визуальная разница между `pad` и `stretch` реальна и не является “чисто внутренним” параметром.
+- визуальная разница между `pad`, `stretch`, safe-crop и aggressive-crop реальна, и aggressive center-crop отрезает часть
+  артефакта на изображениях с большим белым фоном — это анти-паттерн для baseline.
 
 ## 11. Ключевые выводы
 
@@ -338,6 +357,7 @@ Mandatory vs optional в шаблоне:
 
 ## 12. Что ещё осталось
 
-- если нужен действительно сильный leakage-control, заменить proxy `group_key` на более сильный artifact-level идентификатор
+- при появлении данных с настоящим `artifact_id` подключить его в `data_prep` без изменений в split-логике
 - вручную провалидировать heuristics для `layout_mode`, `bg_type`, `has_overlay_text`
-- довести retrain-log так, чтобы он однозначно соответствовал текущему `best.pt`
+- начать data-centric трек (1.2): новый сплит `train_seed/val_gold/test_gold/pool_candidate`, uncertainty signals,
+  embeddings, review-таблица, active learning loop с random/uncertainty/diversity стратегиями

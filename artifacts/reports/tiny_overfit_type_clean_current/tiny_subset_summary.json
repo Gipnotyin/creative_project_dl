@@ -1,0 +1,25 @@
+{
+  "rows": 10,
+  "field_value_counts": {
+    "type": {
+      "блюдце": 2,
+      "изразец": 2,
+      "крышка": 2,
+      "миска": 2,
+      "тарелка": 2
+    }
+  },
+  "missing_label_counts": {
+    "type": 0
+  },
+  "candidate_pool": {
+    "rows_before_filters": 970,
+    "excluded_uncertain_rows": 45,
+    "excluded_missing_label_rows": 18,
+    "excluded_part_label_rows": 0,
+    "rows_after_filters": 907
+  },
+  "exclude_uncertain": true,
+  "require_complete_labels": true,
+  "exclude_part_labels": []
+}

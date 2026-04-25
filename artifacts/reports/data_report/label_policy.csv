@@ -1,0 +1,5 @@
+case,handling
+missing,keep dedicated *_is_missing flag and mask target in loss/metrics
+unknown,map unresolved values to coarse fallback class like прочее or часть не указана
+rare,do not collapse automatically; rely on coarse normalization and report classwise support
+uncertain,mark row with label_is_uncertain based on textual markers like ? / вероятно / возможно
