@@ -1,0 +1,320 @@
+{
+  "config": "configs/data_centric.yaml",
+  "seed": 42,
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "primary_field": "material",
+  "pool_sizes": {
+    "train_seed": 350,
+    "val_gold": 150,
+    "test_gold": 209,
+    "pool_candidate": 678
+  },
+  "code_intersections": {
+    "train_seed__val_gold": 0,
+    "train_seed__test_gold": 0,
+    "train_seed__pool_candidate": 0,
+    "val_gold__test_gold": 0,
+    "val_gold__pool_candidate": 0,
+    "test_gold__pool_candidate": 0
+  },
+  "group_key_intersections": {
+    "train_seed__val_gold": 0,
+    "train_seed__test_gold": 0,
+    "train_seed__pool_candidate": 0,
+    "val_gold__test_gold": 0,
+    "val_gold__pool_candidate": 0,
+    "test_gold__pool_candidate": 0
+  },
+  "all_intersections_zero": true,
+  "coverage": {
+    "manifest_rows": 1387,
+    "covered_unique_codes": 1387,
+    "manifest_minus_covered": [],
+    "covered_minus_manifest": [],
+    "covers_full_manifest": true
+  },
+  "pool_candidate_masked": {
+    "all_hidden": true,
+    "details": {
+      "type": {
+        "all_is_missing_one": true,
+        "unique_values": [
+          "__HIDDEN__"
+        ],
+        "only_hidden_token": true
+      },
+      "part": {
+        "all_is_missing_one": true,
+        "unique_values": [
+          "__HIDDEN__"
+        ],
+        "only_hidden_token": true
+      },
+      "integrity": {
+        "all_is_missing_one": true,
+        "unique_values": [
+          "__HIDDEN__"
+        ],
+        "only_hidden_token": true
+      },
+      "material": {
+        "all_is_missing_one": true,
+        "unique_values": [
+          "__HIDDEN__"
+        ],
+        "only_hidden_token": true
+      }
+    },
+    "pool_candidate_labels_hidden_all_one": true
+  },
+  "oracle_check": {
+    "code_set_equal": true,
+    "pool_only_codes": 0,
+    "oracle_only_codes": 0,
+    "oracle_has_real_labels_per_field": {
+      "type": {
+        "unique_values": [
+          "блюдце",
+          "изразец",
+          "крышка",
+          "миска",
+          "прочее",
+          "тарелка"
+        ],
+        "contains_hidden_token": false
+      },
+      "part": {
+        "unique_values": [
+          "венчик",
+          "донце",
+          "профиль",
+          "прочее",
+          "ручка",
+          "часть не указана"
+        ],
+        "contains_hidden_token": false
+      },
+      "integrity": {
+        "unique_values": [
+          "фрагмент",
+          "целый"
+        ],
+        "contains_hidden_token": false
+      },
+      "material": {
+        "unique_values": [
+          "керамика",
+          "прочее",
+          "стекло",
+          "фарфор",
+          "фаянс"
+        ],
+        "contains_hidden_token": false
+      }
+    }
+  },
+  "val_gold_label_is_uncertain_count": 0,
+  "val_gold_clean_by_baseline_flag": true,
+  "dataset_batch_checks": {
+    "train_seed_train": {
+      "csv": "data/processed/data_centric/train_seed.csv",
+      "rows": 350,
+      "image_shape": [
+        4,
+        3,
+        384,
+        384
+      ],
+      "image_dtype": "torch.float32",
+      "target_mask_first_n_per_field": {
+        "type": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "part": [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "integrity": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "material": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "train_seed_eval": {
+      "csv": "data/processed/data_centric/train_seed.csv",
+      "rows": 350,
+      "image_shape": [
+        4,
+        3,
+        384,
+        384
+      ],
+      "image_dtype": "torch.float32",
+      "target_mask_first_n_per_field": {
+        "type": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "part": [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "integrity": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "material": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "val_gold_eval": {
+      "csv": "data/processed/data_centric/val_gold.csv",
+      "rows": 150,
+      "image_shape": [
+        4,
+        3,
+        384,
+        384
+      ],
+      "image_dtype": "torch.float32",
+      "target_mask_first_n_per_field": {
+        "type": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "part": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "integrity": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "material": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "test_gold_eval": {
+      "csv": "data/processed/data_centric/test_gold.csv",
+      "rows": 209,
+      "image_shape": [
+        4,
+        3,
+        384,
+        384
+      ],
+      "image_dtype": "torch.float32",
+      "target_mask_first_n_per_field": {
+        "type": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "part": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "integrity": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "material": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "pool_candidate_eval": {
+      "csv": "data/processed/data_centric/pool_candidate.csv",
+      "rows": 678,
+      "image_shape": [
+        4,
+        3,
+        384,
+        384
+      ],
+      "image_dtype": "torch.float32",
+      "target_mask_first_n_per_field": {
+        "type": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "part": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "integrity": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "material": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "pool_candidate_target_mask_all_zero_first_n": true
+    }
+  },
+  "transform_determinism": {
+    "csv": "data/processed/data_centric/val_gold.csv",
+    "train_first_pixel_max_diff": 3.555555582046509,
+    "eval_first_pixel_max_diff": 0.0,
+    "train_is_stochastic": true,
+    "eval_is_deterministic": true
+  },
+  "reproducibility_note": "Rerun manually with --rerun-split to verify split is byte-identical for the same seed; original first5 codes per pool are stored in artifacts/reports/data_centric/split_report.json.",
+  "all_checks_pass": true
+}

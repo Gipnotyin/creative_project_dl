@@ -1,0 +1,205 @@
+{
+  "seed": 42,
+  "config": "configs/data_centric.yaml",
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "primary_field": "material",
+  "sizes": {
+    "full_manifest": 1387,
+    "test_gold": 209,
+    "val_gold": 150,
+    "train_seed": 350,
+    "pool_candidate": 678,
+    "covered_total": 1387,
+    "uncovered_rows": 0
+  },
+  "group_intersections": {
+    "group_intersection_train_seed__val_gold": 0,
+    "group_intersection_train_seed__test_gold": 0,
+    "group_intersection_train_seed__pool_candidate": 0,
+    "group_intersection_val_gold__test_gold": 0,
+    "group_intersection_val_gold__pool_candidate": 0,
+    "group_intersection_test_gold__pool_candidate": 0
+  },
+  "all_intersections_zero": true,
+  "covers_full_corpus": true,
+  "class_distributions": {
+    "train_seed": {
+      "type": {
+        "тарелка": 118,
+        "изразец": 98,
+        "блюдце": 55,
+        "крышка": 45,
+        "миска": 28
+      },
+      "part": {
+        "профиль": 73,
+        "донце": 58,
+        "венчик": 32,
+        "ручка": 10,
+        "прочее": 2
+      },
+      "integrity": {
+        "фрагмент": 320,
+        "целый": 30
+      },
+      "material": {
+        "керамика": 161,
+        "фаянс": 91,
+        "фарфор": 83,
+        "стекло": 9
+      }
+    },
+    "val_gold": {
+      "type": {
+        "тарелка": 57,
+        "изразец": 34,
+        "блюдце": 23,
+        "крышка": 18,
+        "миска": 14
+      },
+      "part": {
+        "профиль": 32,
+        "донце": 25,
+        "венчик": 21,
+        "прочее": 4,
+        "ручка": 1
+      },
+      "integrity": {
+        "фрагмент": 140,
+        "целый": 10
+      },
+      "material": {
+        "керамика": 69,
+        "фаянс": 39,
+        "фарфор": 34,
+        "стекло": 4
+      }
+    },
+    "test_gold": {
+      "type": {
+        "тарелка": 85,
+        "изразец": 51,
+        "крышка": 27,
+        "блюдце": 25,
+        "миска": 18
+      },
+      "part": {
+        "профиль": 46,
+        "венчик": 31,
+        "донце": 24,
+        "ручка": 7,
+        "прочее": 1
+      },
+      "integrity": {
+        "фрагмент": 197,
+        "целый": 12
+      },
+      "material": {
+        "керамика": 97,
+        "фаянс": 52,
+        "фарфор": 52,
+        "стекло": 6
+      }
+    },
+    "pool_candidate_oracle": {
+      "type": {
+        "тарелка": 225,
+        "изразец": 178,
+        "блюдце": 112,
+        "крышка": 87,
+        "миска": 57
+      },
+      "part": {
+        "профиль": 141,
+        "донце": 90,
+        "венчик": 76,
+        "ручка": 19,
+        "прочее": 7
+      },
+      "integrity": {
+        "фрагмент": 626,
+        "целый": 52
+      },
+      "material": {
+        "керамика": 329,
+        "фаянс": 186,
+        "фарфор": 138,
+        "стекло": 9
+      }
+    }
+  },
+  "flags_summary": {
+    "train_seed": {
+      "label_is_uncertain": 21,
+      "per_field_missing": {
+        "type": 6,
+        "part": 175,
+        "integrity": 0,
+        "material": 6
+      }
+    },
+    "val_gold": {
+      "label_is_uncertain": 0,
+      "per_field_missing": {
+        "type": 4,
+        "part": 67,
+        "integrity": 0,
+        "material": 4
+      }
+    },
+    "test_gold": {
+      "label_is_uncertain": 12,
+      "per_field_missing": {
+        "type": 3,
+        "part": 100,
+        "integrity": 0,
+        "material": 2
+      }
+    },
+    "pool_candidate_oracle": {
+      "label_is_uncertain": 35,
+      "per_field_missing": {
+        "type": 19,
+        "part": 345,
+        "integrity": 0,
+        "material": 16
+      }
+    }
+  },
+  "reproducibility_first5_codes": {
+    "train_seed_first5_codes": [
+      "М102-2012-1-0496",
+      "М102-2012-1-0752",
+      "М102-2012-1-0833",
+      "М102-2012-1-0843",
+      "М102-2012-2-0543"
+    ],
+    "val_gold_first5_codes": [
+      "М102-2012-1-0949",
+      "М102-2012-2-1264",
+      "М102-2012-2-1265",
+      "БП11-Р01-Г01-1290",
+      "БП11-Р01-тех-0381"
+    ],
+    "pool_candidate_oracle_first5_codes": [
+      "М102-2012-1-0494",
+      "М102-2012-1-0585",
+      "М102-2012-1-0691",
+      "М102-2012-1-0851",
+      "М102-2012-1-0942"
+    ]
+  },
+  "outputs": {
+    "train_seed_csv": "data/processed/data_centric/train_seed.csv",
+    "val_gold_csv": "data/processed/data_centric/val_gold.csv",
+    "test_gold_csv": "data/processed/data_centric/test_gold.csv",
+    "pool_candidate_csv": "data/processed/data_centric/pool_candidate.csv",
+    "pool_candidate_oracle_csv": "data/processed/data_centric/pool_candidate_oracle.csv",
+    "manifest_data_centric_csv": "data/processed/data_centric/manifest_data_centric.csv"
+  }
+}

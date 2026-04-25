@@ -1,0 +1,16 @@
+query_image,query_pred_field,query_pred,query_conf,neighbor_rank,neighbor_image,neighbor_pred,cosine_similarity
+data/raw/images/КБ-2014-Р1-1489_orig.jpg,material,фаянс,0.2820692360401153,1,data/raw/images/Нейш3А-2018-0288_orig.jpg,фаянс,0.4491388201713562
+data/raw/images/КБ-2014-Р1-1489_orig.jpg,material,фаянс,0.2820692360401153,2,data/raw/images/БП12-Г02-5150_orig.jpg,керамика,0.36008796095848083
+data/raw/images/КБ-2014-Р1-1489_orig.jpg,material,фаянс,0.2820692360401153,3,data/raw/images/Нейш3А-2018-1182_orig.jpg,фарфор,0.35626524686813354
+data/raw/images/КБ-2014-Р2-0780_orig.jpg,material,керамика,0.3370519876480102,1,data/raw/images/Нейш3А-2018-0838_orig.jpg,фарфор,0.542364776134491
+data/raw/images/КБ-2014-Р2-0780_orig.jpg,material,керамика,0.3370519876480102,2,data/raw/images/Нейш3А-2018-0288_orig.jpg,фаянс,0.5266443490982056
+data/raw/images/КБ-2014-Р2-0780_orig.jpg,material,керамика,0.3370519876480102,3,data/raw/images/КБ-2014-Р6-091_orig.jpg,керамика,0.48186925053596497
+data/raw/images/ВО-1л58-2017-0059_orig.jpg,material,стекло,0.3386781811714172,1,data/raw/images/КБ-2014-Р1-0426_orig.jpg,фарфор,0.5323525667190552
+data/raw/images/ВО-1л58-2017-0059_orig.jpg,material,стекло,0.3386781811714172,2,data/raw/images/КБ-2014-Р6-111_orig.jpg,фарфор,0.48091667890548706
+data/raw/images/ВО-1л58-2017-0059_orig.jpg,material,стекло,0.3386781811714172,3,data/raw/images/КБ-2014-Р1-0719_orig.jpg,фарфор,0.4778119623661041
+data/raw/images/Нц-45-0863_orig.jpg,material,стекло,0.3635186553001404,1,data/raw/images/Нц-33-0129_orig.jpg,стекло,0.4577900767326355
+data/raw/images/Нц-45-0863_orig.jpg,material,стекло,0.3635186553001404,2,data/raw/images/Т-12-Р2-1636_orig.jpg,стекло,0.4435632824897766
+data/raw/images/Нц-45-0863_orig.jpg,material,стекло,0.3635186553001404,3,data/raw/images/Нц-46-148_orig.jpg,керамика,0.43452346324920654
+data/raw/images/Нейш3А-2018-0740_orig.jpg,material,фарфор,0.3686094880104065,1,data/raw/images/Нейш3А-2018-4751_orig.jpg,фарфор,0.5699676275253296
+data/raw/images/Нейш3А-2018-0740_orig.jpg,material,фарфор,0.3686094880104065,2,data/raw/images/Нейш3А-2018-1755_orig.jpg,керамика,0.5272164940834045
+data/raw/images/Нейш3А-2018-0740_orig.jpg,material,фарфор,0.3686094880104065,3,data/raw/images/ВО-1л58-2017-0072_orig.jpg,фарфор,0.527207612991333

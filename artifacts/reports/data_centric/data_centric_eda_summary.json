@@ -1,0 +1,84 @@
+{
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "primary_field": "material",
+  "rare_classes": {
+    "type": [],
+    "part": [],
+    "integrity": [],
+    "material": []
+  },
+  "pool_structure": {
+    "train_seed": {
+      "rows": 350,
+      "unique_codes": 350,
+      "unique_image_files": 350,
+      "unique_group_keys": 350,
+      "duplicated_image_files": 0,
+      "repeated_group_keys": 0,
+      "valid_image_rows": 350,
+      "broken_image_rows": 0
+    },
+    "val_gold": {
+      "rows": 150,
+      "unique_codes": 150,
+      "unique_image_files": 150,
+      "unique_group_keys": 150,
+      "duplicated_image_files": 0,
+      "repeated_group_keys": 0,
+      "valid_image_rows": 150,
+      "broken_image_rows": 0
+    },
+    "test_gold": {
+      "rows": 209,
+      "unique_codes": 209,
+      "unique_image_files": 209,
+      "unique_group_keys": 209,
+      "duplicated_image_files": 0,
+      "repeated_group_keys": 0,
+      "valid_image_rows": 209,
+      "broken_image_rows": 0
+    },
+    "pool_candidate": {
+      "rows": 678,
+      "unique_codes": 678,
+      "unique_image_files": 678,
+      "unique_group_keys": 678,
+      "duplicated_image_files": 0,
+      "repeated_group_keys": 0,
+      "valid_image_rows": 678,
+      "broken_image_rows": 0
+    }
+  },
+  "visible_rows": 709,
+  "noise_candidates_top": 40,
+  "noise_quality_flag_distribution": {
+    "train_seed": {
+      "clean": 165,
+      "incomplete": 162,
+      "uncertain": 22,
+      "conflict": 1
+    },
+    "val_gold": {
+      "clean": 79,
+      "incomplete": 68,
+      "conflict": 2,
+      "uncertain": 1
+    },
+    "test_gold": {
+      "clean": 100,
+      "incomplete": 97,
+      "uncertain": 12
+    }
+  },
+  "noise_quality_flag_distribution_total": {
+    "clean": 344,
+    "incomplete": 327,
+    "uncertain": 35,
+    "conflict": 3
+  }
+}

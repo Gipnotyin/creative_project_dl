@@ -1,0 +1,92 @@
+# SIMILIS data-centric track config (1.2)
+# Inherits the same architecture/recipe as configs/baseline.yaml so AL strategies
+# are compared on the same model. New: 4 pools (train_seed/val_gold/test_gold/
+# pool_candidate) and AL-specific settings.
+
+seed: 42
+
+# Architecture (identical to baseline for fair comparison)
+backbone: convnext_tiny
+pretrained: true
+image_size: 384
+batch_size: 16
+num_workers: 0
+epochs: 9
+freeze_backbone_epochs: 2
+lr: 0.0003
+backbone_lr: 0.00003
+weight_decay: 0.0001
+max_grad_norm: 1.0
+min_lr: 0.000001
+lr_schedule: cosine
+preprocess_mode: pad
+use_class_weights: true
+
+fields:
+  - type
+  - part
+  - integrity
+  - material
+
+loss_weights:
+  type: 0.35
+  part: 0.25
+  integrity: 0.20
+  material: 0.20
+
+confidence_thresholds:
+  type: 0.45
+  part: 0.50
+  integrity: 0.55
+  material: 0.50
+
+# Data-centric primary field for AL learning curves and main hypothesis testing.
+# `material` chosen because (a) it has the highest noise rate, (b) baseline
+# already shows ~0.84 on test (room to grow), (c) dictionary cleanup is plausible.
+primary_field: material
+
+# Source data
+full_manifest_path: data/processed/full_manifest.csv
+matched_manifest_path: data/processed/matched_manifest.csv
+label_maps_path: data/processed/label_maps.json
+images_dir: data/raw/images
+
+# test_gold reuses the baseline test_open as-is (same final eval surface as baseline)
+test_open_csv: data/processed/test_open.csv
+
+# Pool sizes
+val_gold_size: 150       # ~13% of corpus, taken only from label_is_uncertain=0
+train_seed_size: 350     # ~30% of corpus, starting train set for AL baseline
+# pool_candidate = remainder after carving out test_gold + val_gold + train_seed (~628)
+
+# Output paths for the data-centric split
+data_centric_dir: data/processed/data_centric
+train_seed_csv: data/processed/data_centric/train_seed.csv
+val_gold_csv: data/processed/data_centric/val_gold.csv
+test_gold_csv: data/processed/data_centric/test_gold.csv
+pool_candidate_csv: data/processed/data_centric/pool_candidate.csv
+pool_candidate_oracle_csv: data/processed/data_centric/pool_candidate_oracle.csv
+manifest_data_centric_csv: data/processed/data_centric/manifest_data_centric.csv
+
+# CSVs the trainer will use (it reads train/val/test_csv keys, same as baseline.yaml)
+train_csv: data/processed/data_centric/train_seed.csv
+val_csv: data/processed/data_centric/val_gold.csv
+test_csv: data/processed/data_centric/test_gold.csv
+
+# Active learning settings (used in #16-#18)
+active_learning:
+  budgets: [50, 100]
+  rounds: 1
+  strategies:
+    - random
+    - uncertainty_least_confidence
+    - diversity_coreset
+
+# Output dirs for data-centric artifacts
+checkpoint_dir: artifacts/checkpoints/data_centric
+preds_dir: artifacts/preds
+reports_dir: artifacts/reports/data_centric
+figures_dir: artifacts/figures
+review_dir: artifacts/review
+embeddings_dir: artifacts/embeddings
+active_learning_dir: artifacts/active_learning

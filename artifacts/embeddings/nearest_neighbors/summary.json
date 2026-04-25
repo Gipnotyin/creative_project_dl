@@ -1,0 +1,8 @@
+{
+  "num_queries": 5,
+  "num_neighbors": 3,
+  "embedding_dim": 768,
+  "primary_field": "material",
+  "ranking_signal": "max_prob_material",
+  "output_png": "artifacts/embeddings/nearest_neighbors/nearest_neighbors.png"
+}

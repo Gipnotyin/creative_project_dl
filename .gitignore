@@ -24,3 +24,4 @@ artifacts/ablations/base/checkpoints/
 artifacts/ablations/no_class_weights/checkpoints/
 artifacts/ablations/stretch/checkpoints/
 artifacts/reports/retrain_stdout.log
+artifacts/reports/data_centric/train_seed_stdout.log

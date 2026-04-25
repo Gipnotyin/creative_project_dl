@@ -1,0 +1,23 @@
+{
+  "primary_field": "material",
+  "weights": {
+    "disagreement": 0.5,
+    "uncertainty": 0.4,
+    "noise": 0.3,
+    "embedding": 0.2
+  },
+  "candidate_pool_rows": 697,
+  "top_n_saved": 40,
+  "reason_flag_distribution_topN": {
+    "genuinely_hard": 32,
+    "label_noise_suspect": 4,
+    "visual_nuisance": 4
+  },
+  "pool_distribution_topN": {
+    "test_gold": 22,
+    "val_gold": 17,
+    "train_seed": 1
+  },
+  "disagreement_count_topN": 40,
+  "label_noise_suspect_share_topN": 0.1
+}

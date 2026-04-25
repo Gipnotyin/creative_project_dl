@@ -1,0 +1,78 @@
+{
+  "checkpoint": "artifacts/checkpoints/data_centric/baseline_seed_best.pt",
+  "primary_field": "material",
+  "fields": [
+    "type",
+    "part",
+    "integrity",
+    "material"
+  ],
+  "embedding_dim": 768,
+  "device": "mps",
+  "pools": {
+    "train_seed": {
+      "rows": 350,
+      "embeddings_shape": [
+        350,
+        768
+      ],
+      "spearman_correlations_primary_field": {
+        "max_prob_vs_entropy": 0.9986627062844828,
+        "max_prob_vs_neg_margin": 0.9977519583250243,
+        "entropy_vs_neg_margin": 0.9937283219804711
+      },
+      "material_max_prob_p50": 0.013679713010787964,
+      "material_max_prob_p90": 0.06772260665893558,
+      "material_entropy_p50": 0.08030456304550171,
+      "material_entropy_p90": 0.29608612060546896
+    },
+    "val_gold": {
+      "rows": 150,
+      "embeddings_shape": [
+        150,
+        768
+      ],
+      "spearman_correlations_primary_field": {
+        "max_prob_vs_entropy": 0.9945099782212543,
+        "max_prob_vs_neg_margin": 0.9977919018623049,
+        "entropy_vs_neg_margin": 0.9874981110271569
+      },
+      "material_max_prob_p50": 0.044453591108322144,
+      "material_max_prob_p90": 0.378680557012558,
+      "material_entropy_p50": 0.20006605982780457,
+      "material_entropy_p90": 0.8330729246139525
+    },
+    "test_gold": {
+      "rows": 209,
+      "embeddings_shape": [
+        209,
+        768
+      ],
+      "spearman_correlations_primary_field": {
+        "max_prob_vs_entropy": 0.9937667595562333,
+        "max_prob_vs_neg_margin": 0.9986171723013828,
+        "entropy_vs_neg_margin": 0.9885233187864767
+      },
+      "material_max_prob_p50": 0.04740971326828003,
+      "material_max_prob_p90": 0.4000730156898499,
+      "material_entropy_p50": 0.21878047287464142,
+      "material_entropy_p90": 0.7486467599868777
+    },
+    "pool_candidate": {
+      "rows": 678,
+      "embeddings_shape": [
+        678,
+        768
+      ],
+      "spearman_correlations_primary_field": {
+        "max_prob_vs_entropy": 0.9939409187697432,
+        "max_prob_vs_neg_margin": 0.9987786119403294,
+        "entropy_vs_neg_margin": 0.9888842597743244
+      },
+      "material_max_prob_p50": 0.03779152035713196,
+      "material_max_prob_p90": 0.3600015223026276,
+      "material_entropy_p50": 0.17785363644361496,
+      "material_entropy_p90": 0.7604529023170472
+    }
+  }
+}

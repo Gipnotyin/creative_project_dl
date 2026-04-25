@@ -1,0 +1,12 @@
+{
+  "checkpoint_path": "artifacts/checkpoints/data_centric/baseline_seed_best.pt",
+  "test_image": "data/raw/images/М102-2012-1-0949_orig.jpg",
+  "device": "mps",
+  "max_logit_diff_per_field": {
+    "type": 0.0,
+    "part": 0.0,
+    "integrity": 0.0,
+    "material": 0.0
+  },
+  "all_fields_match": true
+}
